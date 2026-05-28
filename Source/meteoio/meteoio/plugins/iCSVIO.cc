@@ -37,7 +37,7 @@ namespace mio {
 * data repositories but can also support a much broader use as very few metadata are mandatory (but many are available). Being
 * a text format, it should remain easily readable in decades to come, thus supporting long term data preservation.
 * For comprehensive details about the format, refer to its
-* <a href="http://envidat.gitlab-pages.wsl.ch/icsv/">official format documentation</a>.
+* <a href="https://git-pages.wsl.ch/envidat/icsv/">official format documentation</a>.
 *
 * When using iCSV with MeteoIO, the following additional MetaData is required:
 * - Timestamp or Julian field: This represents the timestamps of the measurement in ISO format.
@@ -214,6 +214,8 @@ void iCSVIO::parseOutputSection()
 			acdd.setUserConfig(cfg, "Output", false); // do not allow multi-line keys
 			const bool enableNCML = cfg.get("ACDD_WRITE_NCML", "Output", false);
 			acdd.setEnableNcML( enableNCML ); //this can be forced to TRUE with a compilation flag
+			const bool enableJson = cfg.get("ACDD_WRITE_JSON", "Output", false);
+			acdd.setEnableJson( enableJson ); //this can be forced to TRUE with a compilation flag
 		}
 
 		cfg.getValue("METEOPATH", "Output", outpath, IOUtils::nothrow);
@@ -717,7 +719,7 @@ void iCSVIO::writeToFile(const iCSVFile &outfile)
 	}
 
 	//set variables for acdd's NcML output
-	if (acdd.enableNcML() && fields.count("fields")>0) {
+	if ((acdd.enableNcML() || acdd.enableJson()) && fields.count("fields")>0) {
 		const bool has_long_name = fields.count("long_name")!=0 && !fields.at("long_name").empty();
 		const bool has_units = fields.count("units")!=0 && !fields.at("units").empty();
 		for (size_t ii = 0; ii<fields.at("fields").size(); ii++) {
@@ -738,7 +740,7 @@ void iCSVIO::writeToFile(const iCSVFile &outfile)
 	const auto& out_dates = outfile.getAllDatesInFile();
 	const auto& out_locations = outfile.getAllLocationsInData();
 	const double nodata = outfile.getNoData();
-	if (acdd.enableNcML()) acdd.addDimension("timestamp", "", out_dates.size());
+	if (acdd.enableNcML() || acdd.enableJson()) acdd.addDimension("timestamp", "", out_dates.size());
 
 	for (size_t ii = 0; ii < outfile.getRowData().size(); ii++) {
 		size_t data_idx = 0;
@@ -766,6 +768,7 @@ void iCSVIO::writeToFile(const iCSVFile &outfile)
 	file.close();
 
 	if (acdd.isEnabled() && acdd.enableNcML()) acdd.writeNcML( outfile.filename );
+	if (acdd.isEnabled() && acdd.enableJson()) acdd.writeJson( outfile.filename );
 }
 
 } // namespace

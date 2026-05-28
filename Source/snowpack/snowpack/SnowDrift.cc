@@ -84,11 +84,11 @@ static bool get_redistribution(const SnowpackConfig& cfg)
 	//cfg.getValue("SNOW_EROSION", "SnowpackAdvanced", snow_erosion);
 	if (nSlopes>1)
 		cfg.getValue("SNOW_REDISTRIBUTION", "SnowpackAdvanced", redistribution);
-	
+
 	return redistribution;
 }
 
-static double get_sn_dt(const SnowpackConfig& cfg) 
+static double get_sn_dt(const SnowpackConfig& cfg)
 {
 	//Calculation time step in seconds as derived from CALCULATION_STEP_LENGTH
 	const double calculation_step_length = cfg.get("CALCULATION_STEP_LENGTH", "Snowpack");
@@ -206,7 +206,7 @@ double SnowDrift::compMassFlux(const std::vector<ElementData>& EMS, const double
  * -# SNOW_REDISTRIBUTION is true: using vw_drift to erode the snow surface on the windward virtual slope
  * -# SNOW_EROSION is true: using vw to erode the snow surface at the main station (flat field or slope).
  * -# SNOW_EROSION is true and SNOW_REDISTRIBUTION is false: using vw_drift (if available and larger than vw)
-             to do virtual erosion either on flat field (#slopes == 1) or on windward slope (#slopes > 1).
+             to do virtual erosion either on flat field (\#slopes == 1) or on windward slope (\#slopes > 1).
  * 	@note However, erosion will also be controlled by mH and thus a measured snow depth (HS1) is required
  * 	@note If either measured snow depth is missing or the conditions for a real erosion are not fulfilled,
  *          the possibility of a virtual erosion will be considered using the ErosionLevel marker (virtual erodible layer).

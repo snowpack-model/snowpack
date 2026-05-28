@@ -95,16 +95,14 @@ double RegressionFill::linear(double julian_date, const std::vector<double>& coe
 
 
 // ------------------------- MAIN FUNCTION -----------------------
-void RegressionFill::resample(const std::string& /* stationHash */, const size_t& /* index */, const ResamplingPosition& /* position */, const size_t& /* paramindex */,
-                            const std::vector<MeteoData>& /* vecM */, MeteoData& /* md */) {
-								return;
-							}
-
-
+bool RegressionFill::resample(const std::string& /* stationHash */, const size_t& /* index */, const ResamplingPosition& /* position */, const size_t& /* paramindex */, const std::vector<MeteoData>& /* vecM */, MeteoData& /* md */) 
+{
+	return false;
+}
 
 // TODO: Possibility to cache the models directly, and easily support different kinds of regression
 // TODO: Support giving multiple stations as support, and then use the one with the most data
-void RegressionFill::resample(const std::string& /*stationHash*/, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
+bool RegressionFill::resample(const std::string& /*stationHash*/, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
                             const std::vector<MeteoData>& vecM, MeteoData& md, const std::vector<METEO_SET>& additional_stations)
 {
 	if (index >= vecM.size()) throw IOException("The index of the element to be resampled is out of bounds", AT);
@@ -113,7 +111,7 @@ void RegressionFill::resample(const std::string& /*stationHash*/, const size_t& 
 		const double value = vecM[index](paramindex);
 		if (value != IOUtils::nodata) {
 			md(paramindex) = value;
-			return;
+			return true;
 		}
 	}
 
@@ -129,13 +127,14 @@ void RegressionFill::resample(const std::string& /*stationHash*/, const size_t& 
 	double new_x_val;
 	if (!findValueAt(additional_stations[0], md.date, paramindex, new_x_val)) {
 		if (verbose) std::cout << "RegressionFill: could not find value at required timestamp in support station" << std::endl;
-		return;
+		return false;
 	}
 
 	// if already fitted for parameter, use the cached coefficients
 	if (regression_coefficients.find(paramindex) != regression_coefficients.end()) {
 		md(paramindex) = linear(new_x_val, regression_coefficients[paramindex]); // TODO: do i need to convert to gmt?
-		return;
+		md.setResampled(true);
+		return true;
 	}
 
 	// get the regression data before the missing value
@@ -145,7 +144,7 @@ void RegressionFill::resample(const std::string& /*stationHash*/, const size_t& 
 
 	if (x.size() < 2) {
 		if (verbose) std::cout << "RegressionFill: Did not find enough data to perform regression" << std::endl;
-		return;
+		return false;
 	};
 
 	// do the regression
@@ -157,7 +156,8 @@ void RegressionFill::resample(const std::string& /*stationHash*/, const size_t& 
 	regression_coefficients[paramindex] = model.getParams();
 
 	md(paramindex) = model.f(new_x_val);
-	return;
+	md.setResampled(true);
+	return true;
 }
 
 } //namespace

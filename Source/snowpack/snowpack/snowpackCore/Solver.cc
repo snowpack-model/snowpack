@@ -8,7 +8,6 @@
 
 #include <snowpack/snowpackCore/Solver.h>
 #include <meteoio/MeteoIO.h>
-#include <iostream>
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
@@ -1682,12 +1681,12 @@ inline void MERGE_COL_BLOCK(SD_COL_BLOCK_DATA *pCOL0, SD_COL_BLOCK_DATA **ppCOL1
 		}
 
 		// free all next lower blocks if fully included in the upper one
-		while ( pC_ = pLo_->Next, pC_ && ( pC_->Col1 <= pUp_->Col1 ) ) {
+		while ( (pC_ = pLo_->Next) && pC_ && ( pC_->Col1 <= pUp_->Col1 ) ) {
 			pLo_->Next = pC_->Next;
 			SD_FREE_COL_BLOCK(pC_, pMAT);
 		}
 		// free the next lower block if partially included or adjacent to the upper one
-		if ( pC_ = pLo_->Next, pC_ && ( pC_->Col0 - 1 <= pUp_->Col1 ) ) {
+		if ( (pC_ = pLo_->Next) && pC_ && ( pC_->Col0 - 1 <= pUp_->Col1 ) ) {
 			pLo_->Next = pC_->Next;
 			pLo_->Col1 = pC_->Col1;
 			SD_FREE_COL_BLOCK(pC_, pMAT);
@@ -1754,7 +1753,7 @@ int  ComputeFillIn(SD_TMP_CON_MATRIX_DATA *pMat)
 
 				SkeepFirstMergeOperation:;
 			}
-		} while ( pColBlock = pColBlock->Next, pColBlock );
+		} while ( (pColBlock = pColBlock->Next) && pColBlock );
 	}
 
 	return 0;

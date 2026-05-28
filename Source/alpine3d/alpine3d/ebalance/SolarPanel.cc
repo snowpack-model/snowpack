@@ -106,14 +106,14 @@ void SolarPanel::initTerrain(size_t M_epsilon_terrain_in, size_t M_phi_terrain_i
 
 /**
 * @brief Updates grid Radiation (incoming SWR for all grid points): preparing TerrainRadiation if TerrainRadiationAlg!=COMPLEX
-* @param[in] grid-albedo
-* @param[in] grid-direct SWR
-* @param[in] grid-diffuse SWR
-* @param[in] grid-direct-horizontal-unshaded (for projection on PVP/triangles)
-* @param[out] -
-*
+* @param[in] in_albedo gridded albedo [0-1]
+* @param[in] in_direct gridded direct short wave radiation [W/m2]
+* @param[in] in_diffuse gridded diffuse short wave radiation [W/m2]
+* @param[in] in_direct_unshaded_horizontal gridded direct radiation without shading (for projection on PVP/triangles) [W/m2]
+* @param[in] solarAzimuth Azimuth of the Sun (in degrees North)
+* @param[in] solarElevation Solar elevation above the horizontal (degrees above the horizontal)
 */
-void SolarPanel::setGridRadiation(const mio::Array2D<double>& in_albedo, const mio::Array2D<double>& in_direct, const mio::Array2D<double>& in_diffuse, const mio::Array2D<double>& in_direct_unshaded_horizontal, const double solarAzimuth, const double solarElevation){
+void SolarPanel::setGridRadiation(const mio::Array2D<double>& in_albedo, const mio::Array2D<double>& in_direct, const mio::Array2D<double>& in_diffuse, const mio::Array2D<double>& in_direct_unshaded_horizontal, const double& solarAzimuth, const double& solarElevation){
 
 	albedo = in_albedo;
 
@@ -165,22 +165,21 @@ void SolarPanel::setGridRadiation(const mio::Array2D<double>& in_albedo, const m
 
 /**
 * @brief Writes output for SolarPanels (PVP files), and updates the sum if generate_PVP_sum==true
-* @param[in] Timeobject for timestamp
-* @param[in] grid-albedo
-* @param[out] -
-*
+* @param[in] timestamp Current timestamp for the output
+* @param[in] solarAzimuth Current azimuth of the Sun (degrees from North)
+* @param[in] solarElevation Current solar elevation (degrees above the horizontal)
 */
-void SolarPanel::setSP(const mio::Date timestamp, const double solarAzimuth, const double solarElevation){
+void SolarPanel::setSP(const mio::Date timestamp, const double solarAzimuth, const double solarElevation)
+{
 	std::cout << "Key1";
 	getRadfield(); // Trigger Calculation of Iradiation on Solar Panels
 
 	std::vector<std::ofstream> PVP_files(pv_points.size());
-	std::string path = "../output/PVP/";
+	const std::string path( "../output/PVP/" );
 
 	// Open Static Panel Files
- 	for (size_t i = 0; i < pv_points.size(); ++i)
-	{
-		std::string filename=path;
+ 	for (size_t i = 0; i < pv_points.size(); ++i) {
+		std::string filename(path);
 		filename.append(std::to_string(i+1)).append(".pvp");
 
 		PVP_files[i].open(filename, std::ios_base::app | std::ios_base::out);
@@ -191,8 +190,7 @@ void SolarPanel::setSP(const mio::Date timestamp, const double solarAzimuth, con
 	}
 
 	// Write Static Panel Files
-	for (size_t i = 0; i < pv_points.size(); ++i)
-	{
+	for (size_t i = 0; i < pv_points.size(); ++i) {
 		PVP_files[i]<<std::fixed <<std::setprecision(6) <<timestamp.toString(Date::ISO)<<","<<timestamp.getJulian()<<","<<solarAzimuth<<","<<solarElevation<<","<<direct[i]<<","<<diffuse[i];
 		PVP_files[i]<<std::fixed <<std::setprecision(6) <<","<<terrain_iso[i]<<","<<terrain_aniso[i]<<","<<terrain_ms[i]<<","<<terrain_ms_noshadow[i]<<","<<albedo(get_ii(i),get_jj(i))<<","<<direct_beam[i]<<"\n";
 		PVP_files[i].close();
@@ -203,15 +201,12 @@ void SolarPanel::setSP(const mio::Date timestamp, const double solarAzimuth, con
 	if(sun_tracker) WriteSunTrackerRadiation(0, "SunTracker.pvp", timestamp);
 
 	// Update sum [MT 3.4.4 Radiation Maps], [MT 2.2.4 Solar Panels, fig. 2.16]
-	if (generate_PVP_sum && v_globalsun[2]>=0) // no accumulation during the night
-	{
+	if (generate_PVP_sum && v_globalsun[2]>=0) { // no accumulation during the night
 		TList_sum+=TList_ms;
 
 		#pragma omp parallel for
-		for (size_t ii = 0; ii < dimx; ++ii)
-		{
-			for (size_t jj = 0; jj < dimy; ++jj)
-			{
+		for (size_t ii = 0; ii < dimx; ++ii) {
+			for (size_t jj = 0; jj < dimy; ++jj) {
 				Diffuse_sum(ii, jj) += d_diffuse(ii,jj);
 
 				double proj_to_ray;

@@ -107,7 +107,7 @@ size_t Daily_solar::getStationIndex(const std::string& key)
 	return nr_stations; //the new index is the old nr_stations
 }
 
-void Daily_solar::resample(const std::string& stationHash, const size_t& index, const ResamplingPosition& /*position*/, const size_t& paramindex,
+bool Daily_solar::resample(const std::string& stationHash, const size_t& index, const ResamplingPosition& /*position*/, const size_t& paramindex,
                            const std::vector<MeteoData>& vecM, MeteoData& md)
 {
 	if (index >= vecM.size())
@@ -116,7 +116,7 @@ void Daily_solar::resample(const std::string& stationHash, const size_t& index, 
 	const double lat = md.meta.position.getLat();
 	const double lon = md.meta.position.getLon();
 	const double alt = md.meta.position.getAltitude();
-	if (lat==IOUtils::nodata || lon==IOUtils::nodata || alt==IOUtils::nodata) return;
+	if (lat==IOUtils::nodata || lon==IOUtils::nodata || alt==IOUtils::nodata) return false;
 	const double HS = md(MeteoData::HS);
 
 	//get station index
@@ -130,7 +130,7 @@ void Daily_solar::resample(const std::string& stationHash, const size_t& index, 
 		const size_t indexP = getDailyValue(vecM, paramindex, index, dateStart[stat_idx], dateEnd[stat_idx]);
 		if (indexP==IOUtils::npos) { //no daily sum found for the current day
 			loss_factor[stat_idx] = IOUtils::nodata;
-			return;
+			return false;
 		}
 
 		const double daily_sum = compRadiation(lat, lon, alt, HS, stat_idx);
@@ -138,7 +138,7 @@ void Daily_solar::resample(const std::string& stationHash, const size_t& index, 
 	}
 
 	if (loss_factor[stat_idx]==IOUtils::nodata) //the station could not be calculated for this day
-		return;
+		return false;
 
 	//interpolate radiation for this timestep and write it out
 	const double rad = getSolarInterpol(md.date, stat_idx);
@@ -152,6 +152,7 @@ void Daily_solar::resample(const std::string& stationHash, const size_t& index, 
 	}
 
 	md.setResampled(true);
+	return true;
 }
 
 } //namespace

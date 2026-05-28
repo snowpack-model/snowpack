@@ -134,13 +134,13 @@ double Accumulate::complexSampling(const std::vector<MeteoData>& vecM, const siz
 }
 
 //WARNING: index is the first element AFTER the resampling_date
-void Accumulate::resample(const std::string& /*stationHash*/, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
+bool Accumulate::resample(const std::string& /*stationHash*/, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
                           const std::vector<MeteoData>& vecM, MeteoData& md)
 {
 	if (index >= vecM.size())
 		throw IOException("The index of the element to be resampled is out of bounds", AT);
 	if (position==ResamplingAlgorithms::begin || index==0) {
-		return;
+		return false;
 	}
 
 	md(paramindex) = IOUtils::nodata;
@@ -150,12 +150,12 @@ void Accumulate::resample(const std::string& /*stationHash*/, const size_t& inde
 	const size_t start_idx = findStartOfPeriod(vecM, index, dateStart);
 	if (start_idx==IOUtils::npos) {//No acceptable starting point found
 		std::cerr << "[W] Could not accumulate " << vecM.at(0).getNameForParameter(paramindex) << ": not enough data for accumulation period at date " << resampling_date.toString(Date::ISO) << "\n";
-		return;
+		return false;
 	}
 
 	//the period that should be accumulated is not even in vecM
 	if (position==ResamplingAlgorithms::end && start_idx>=(vecM.size()-1)) { //the first element before "position" is the last of the vector
-		return;
+		return false;
 	}
 
 	if ((index - start_idx) <= 1) {//easy upsampling when start & stop are in the same input time step
@@ -168,6 +168,8 @@ void Accumulate::resample(const std::string& /*stationHash*/, const size_t& inde
 		const double sum = complexSampling(vecM, paramindex, index, start_idx, dateStart, resampling_date); //if resampling was unsuccesful, sum==IOUtils::nodata
 		md(paramindex) = sum;
 	}
+	
+	return true;
 }
 
 } //namespace

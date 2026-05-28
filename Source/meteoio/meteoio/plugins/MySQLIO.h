@@ -22,6 +22,7 @@
 #include <meteoio/IOInterface.h>
 
 #include <string>
+#include <map>
 
 namespace mio {
 
@@ -44,18 +45,21 @@ class MYSQLIO : public IOInterface {
 
 	private:
 		void readConfig();
-		std::vector<std::string> readStationIDs() const;
+		void readStationIDs();
+		std::pair<std::string, std::string> parseStationID(const std::string& stationID);
 		void readStationMetaData();
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
 		              const size_t& stationindex) const;
 
 		const Config cfg;
 		std::vector<std::string> vecStationIDs;
+		std::map<std::string, std::string> stationIDtoIndex; // Maps station abbreviation to index string for composite ID schemas
 		std::vector<StationData> vecStationMetaData;
 		std::string mysqlhost, mysqldb, mysqluser, mysqlpass;
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		double in_dflt_TZ, out_dflt_TZ;
 		unsigned int mysql_options;
+		bool hasCompositeIDs=false; //set to true when the db schema stores the stationID as a string field and an int index field.
 };
 
 } //namespace

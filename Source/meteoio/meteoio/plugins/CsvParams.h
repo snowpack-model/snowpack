@@ -98,6 +98,7 @@ class CsvParameters {
 		void setSkipFields(const std::string& skipFieldSpecs, const bool& negate);
 		void setUnits(const std::string& csv_units,  const char& delim=' ');
 		void setLinesExclusions(const std::vector< LinesRange >& linesSpecs) {linesExclusions=linesSpecs;}
+		void setMuteWarningsLines(const std::vector< LinesRange >& linesSpecs) {muteWarningsLines=linesSpecs;}
 		void setNodata(const std::string& nodata_markers);
 		void setPurgeChars(const std::string& chars_to_purge);
 		void setFile(const std::string& i_file_and_path, const std::vector<std::string>& vecMetaSpec, const std::string& filename_spec, const std::string& station_idx="");
@@ -114,6 +115,7 @@ class CsvParameters {
 		Date getDate(const std::vector<std::string>& vecFields) {return date_cols.parseDate(vecFields);}
 		bool excludeLine(const size_t& linenr, bool& hasExclusions);
 		bool skipField(const size_t& fieldnr) const;
+		bool isMutedLine(const size_t& linenr) const;
 		bool hasPurgeChars() const {return !purgeCharsSet.empty();}
 		void purgeChars(std::string &line) {IOUtils::removeChars(line, purgeCharsSet);}
 		bool isNodata(std::string value) const;
@@ -145,6 +147,7 @@ class CsvParameters {
 		std::set<size_t> skip_fields;		///< Fields that should not be read
 		std::set<char> purgeCharsSet;			///< characters to purge from each line (such as quotes, double quotes, etc)
 		std::vector< LinesRange > linesExclusions;	///< lines to exclude from reading
+		std::vector< LinesRange > muteWarningsLines;///< lines for which timestamp warnings should be muted
 		std::string file_and_path, single_field; 		///< the scanf() format string for use in parseDate, the parameter in case of a single value contained in the Csv file
 		std::string name, id;
 		DateRange coverageHint;
@@ -152,6 +155,8 @@ class CsvParameters {
 		size_t exclusion_idx;		///< pointer to the latest exclusion period that has been found, if using lines exclusion
 		size_t exclusion_last_linenr; ///< pointer to the last line number that has been checked for exclusions
 		size_t last_allowed_field;	///< index of the last allowed field (as set by the user with setSkipFields(negate=true)
+		mutable size_t mute_idx;        ///< pointer to the latest mute warnings period that has been found
+		mutable size_t mute_last_linenr; ///< pointer to the last line number that has been checked for mute warnings
 };
 
 } //namespace

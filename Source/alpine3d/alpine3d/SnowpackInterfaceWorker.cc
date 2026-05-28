@@ -315,7 +315,7 @@ void SnowpackInterfaceWorker::getOutputSpecialPoints(std::vector<SnowStation*>& 
 {
 	for (size_t ii=0; ii<snow_pixel.size(); ii++) {
 		ptr_snow_pixel.push_back( &snow_pixel[ii] );
-		ptr_meteo_pixel.push_back( &meteo_pixel[ii] );
+		ptr_meteo_pixel.push_back( meteo_pixel[ii] );
 		ptr_surface_flux.push_back( &surface_flux[ii] );
 	}
 }
@@ -777,7 +777,7 @@ void SnowpackInterfaceWorker::grooming(const mio::Date &current_date, const mio:
 
 void SnowpackInterfaceWorker::gatherSpecialPoints(const CurrentMeteo& meteoPixel, const SnowStation& snowPixel, const SurfaceFluxes& surfaceFlux)
 {
-	meteo_pixel.push_back( meteoPixel );
+	meteo_pixel.push_back( const_cast<CurrentMeteo*>(&meteoPixel) );
 	snow_pixel.push_back( snowPixel );
 	surface_flux.push_back( surfaceFlux );
 }

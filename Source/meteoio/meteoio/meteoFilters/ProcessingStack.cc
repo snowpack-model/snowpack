@@ -28,9 +28,8 @@ const std::string ProcessingStack::filter_section( "FILTERS" );
 const std::string ProcessingStack::filter_pattern( "::FILTER" );
 const std::string ProcessingStack::arg_pattern( "::ARG" );
 
-ProcessingStack::ProcessingStack(const Config& cfg, const std::string& parname) : filter_stack(), param_name(parname), data_qa_logs(false)
+ProcessingStack::ProcessingStack(const Config& cfg, const std::string& parname) : filter_stack(), param_name(parname), data_qa(cfg)
 {
-	cfg.getValue("DATA_QA_LOGS", "GENERAL", data_qa_logs, IOUtils::nothrow);
 
 	//extract each filter and its arguments, then build the filter stack
 	const std::vector< std::pair<std::string, std::string> > vecFilters( cfg.getValues(parname+filter_pattern, filter_section) );
@@ -106,17 +105,17 @@ bool ProcessingStack::applyFilter(const size_t& param, const size_t& jj, const s
 			if (tmp_ovec.front().date<sub_start) {
 				size_t ll=0;
 				while (tmp_ovec[ll].date<sub_start) ll++;
-				tmp_ovec.erase(tmp_ovec.begin(), tmp_ovec.begin() + ll);
+				tmp_ovec.erase(tmp_ovec.begin(), tmp_ovec.begin() + static_cast<ptrdiff_t>(ll));
 			}
 			//trim the end of the vector if timestamps have been added after the time restriction range
 			if (tmp_ovec.back().date>sub_end) {
 				size_t ll=0;
 				while (tmp_ovec[tmp_ovec.size() - 1 - ll].date>sub_end) ll++;
-				tmp_ovec.erase(tmp_ovec.begin()-ll, tmp_ovec.end());
+				tmp_ovec.erase(tmp_ovec.begin()-static_cast<ptrdiff_t>(ll), tmp_ovec.end());
 			}
 			//this might happen in time filters
 			if (tmp_ivec.size()<tmp_ovec.size()) {
-				ovec.insert(ovec.begin()+ivec_start_idx, tmp_ovec.size()-tmp_ivec.size(), ovec.front());
+				ovec.insert(ovec.begin()+static_cast<ptrdiff_t>(ivec_start_idx), tmp_ovec.size()-tmp_ivec.size(), ovec.front());
 			}
 			//copy the filtered data back into ovec
 			for (size_t kk=0; kk<tmp_ovec.size(); kk++) {
@@ -179,11 +178,10 @@ bool ProcessingStack::filterStation(std::vector<MeteoData> ivec,
 					const double filtered = ovec[stat_idx][kk](param);
 					if (orig!=filtered) {
 						ovec[stat_idx][kk].setFiltered(param);
-						if (data_qa_logs) {
-							const std::string statName( ovec[stat_idx][kk].meta.getStationName() );
-							const std::string stat = (!statID.empty())? statID : statName;
+						if (data_qa.isEnabled()) {
+							const std::string stat( (!statID.empty())? statID : ovec[stat_idx][kk].meta.getStationName() );
 							const std::string filtername( (*filter_stack[jj]).getName() );
-							cout << "[DATA_QA] Filtering " << stat << "::" << full_paramname << "::" << filtername << " " << ivec[kk].date.toString(Date::ISO_TZ) << " [" << ivec[kk].date.toString(Date::ISO_WEEK) << "]\n";
+							data_qa.printQA(DataQA::FILTERING, stat, full_paramname, filtername, ivec[kk].date);
 						}
 					}
 				}
@@ -192,11 +190,10 @@ bool ProcessingStack::filterStation(std::vector<MeteoData> ivec,
 				for (size_t kk=0; kk<ivec.size(); kk++) {
 					while (kk_out<output_size && ovec[stat_idx][kk_out].date < ivec[kk].date) { //new points inserted
 						ovec[stat_idx][kk_out].setFiltered(param);
-						if (data_qa_logs) {
-							const std::string statName( ovec[stat_idx][kk_out].meta.getStationName() );
-							const std::string stat = (!statID.empty())? statID : statName;
+						if (data_qa.isEnabled()) {
+							const std::string stat( (!statID.empty())? statID : ovec[stat_idx][kk_out].meta.getStationName() );
 							const std::string filtername( (*filter_stack[jj]).getName() );
-							cout << "[DATA_QA] Filtering " << stat << "::" << full_paramname << "::" << filtername << " " << ivec[kk].date.toString(Date::ISO_TZ) << " [" << ivec[kk].date.toString(Date::ISO_WEEK) << "]\n";
+							data_qa.printQA(DataQA::FILTERING, stat, full_paramname, filtername, ivec[kk].date);
 						}
 						kk_out++;
 					}
@@ -207,11 +204,10 @@ bool ProcessingStack::filterStation(std::vector<MeteoData> ivec,
 						const double filtered = ovec[stat_idx][kk_out](param);
 						if (orig!=filtered) {
 							ovec[stat_idx][kk_out].setFiltered(param);
-							if (data_qa_logs) {
-								const std::string statName( ovec[stat_idx][kk_out].meta.getStationName() );
-								const std::string stat = (!statID.empty())? statID : statName;
+							if (data_qa.isEnabled()) {
+								const std::string stat( (!statID.empty())? statID : ovec[stat_idx][kk_out].meta.getStationName() );
 								const std::string filtername( (*filter_stack[jj]).getName() );
-								cout << "[DATA_QA] Filtering " << stat << "::" << full_paramname << "::" << filtername << " " << ivec[kk].date.toString(Date::ISO_TZ) << " [" << ivec[kk].date.toString(Date::ISO_WEEK) << "]\n";
+								data_qa.printQA(DataQA::FILTERING, stat, full_paramname, filtername, ivec[kk].date);
 							}
 						}
 					}

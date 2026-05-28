@@ -54,7 +54,7 @@ namespace mio {
  * The NetCDF format does not impose a specific set of metadata and therefore in order to easily exchange data
  * within a given field, it is a good idea to standardize the metadata. Several such metadata schema can be used
  * by this plugin:
- * - CF1 - the <A HREF="http://cfconventions.org">conventions</A> for climate and forecast (CF) metadata (there is an 
+ * - CF1 - the <A HREF="http://cfconventions.org">conventions</A> for climate and forecast (CF) metadata (there is an
  * <a href="https://pumatest.nerc.ac.uk/cgi-bin/cf-checker.pl">online validator</a>);
  * - ECMWF - from the <A HREF="http://www.ecmwf.int/">European Centre for Medium-Range Weather Forecasts</A>, see the <A HREF="https://software.ecmwf.int/wiki/display/TIGGE/Soil+temperature">ECMWF Wiki</A> for a description of the available fields;
  * - CROCUS - from the <A HREF="http://www.cnrm.meteo.fr/">National Centre for Meteorological Research</A>;
@@ -113,7 +113,7 @@ namespace mio {
  *     - NC_STRICT_SCHEMA: only write out parameters that are specifically described in the chosen schema (default: false, all parameters in
  * MeteoGrids::Parameters are also written out); [Output]
  *     - NC_LAX_SCHEMA: write out all provided parameters even if no metadata can be associated with them (default: false); [Output]
- *     - ACDD_WRITE: add the Attribute Conventions Dataset Discovery <A href="http://wiki.esipfed.org/index.php?title=Category:Attribute_Conventions_Dataset_Discovery">(ACDD)</A> 
+ *     - ACDD_WRITE: add the Attribute Conventions Dataset Discovery <A href="http://wiki.esipfed.org/index.php?title=Category:Attribute_Conventions_Dataset_Discovery">(ACDD)</A>
  * metadata to the headers (then the individual keys are provided according to the ACDD class documentation) (default: true, [Output])
  *     - For some applications, some extra information must be provided for meteorological time series (for example, for Crocus), in the [Output] section:
  *          - ZREF: the reference height for meteorological measurements;
@@ -128,7 +128,7 @@ namespace mio {
  * @note When providing multiple grid files in one directory, in case of overlapping files (because each file can provide multiple timestamps),
  * the file containing the newest data has priority. This is convenient when using forecast data to automatically use the most short-term forecast.
  * @note When using the CROCUS schema, please note that the humidity should be provided as specific humidity, so please use a data
- * creator if don't already have a QI parameter (see HumidityGenerator). Crocus also requires split precipitation, this can be generated 
+ * creator if don't already have a QI parameter (see HumidityGenerator). Crocus also requires split precipitation, this can be generated
  * by the PrecSplitting creator (make sure to use parameters names from MeteoGrids::Parameters).
  * Finally, Crocus does not handles missing data, so make sure you define some data generators in case some data might be missing (specially for the precipitation).
  *
@@ -228,11 +228,11 @@ namespace mio {
  * "type": "fc",
  * })
  * @endcode
- * 
+ *
  * @section netcdf_copernicus Copernicus Era 5
  * @note This is a work in progress, stay tuned!
- * 
- * The Era 5 data can be downloaded from the <a href="https://cds.climate.copernicus.eu/cdsapp#!/home">Copernicus Climate Data Store</a> 
+ *
+ * The Era 5 data can be downloaded from the <a href="https://cds.climate.copernicus.eu/cdsapp#!/home">Copernicus Climate Data Store</a>
  * (either from the web interface or using the <a href="https://pypi.org/project/cdsapi/">cdsapi</a>), after registering and creating an api key.
  *
  * Ideally, download the hourly data and select the following fields:
@@ -260,7 +260,7 @@ namespace mio {
  *
  * c = cdsapi.Client()
  * month = sys.argv[1]
- * 
+ *
  * c.retrieve(
  *    'reanalysis-era5-single-levels',
  *    {
@@ -308,7 +308,7 @@ namespace mio {
  *    f'./era5_{month}.nc')
  * @endcode
  *
- * The time period and spatial extent of the request should be defined properly in the 'year' and 'area' instances, respectively. This API request downloads from the CDS 
+ * The time period and spatial extent of the request should be defined properly in the 'year' and 'area' instances, respectively. This API request downloads from the CDS
  * all the aforementioned variables at hourly resolution for each day of the desired year(s). The request limit for CDS is 120'000 items per single request, which is why sometimes
  * heavy requests can crash after being queued and processed. For this reason, the above script should be launched from terminal in the following way:
  *
@@ -316,8 +316,8 @@ namespace mio {
  * parallel ./era5_download.py ::: {01..12} -j 4
  * @endcode
  *
- * In this way, each month of the selected year(s) will be downloaded separately within a parallel process that runs, for example, maximum 4 jobs at one time. 
- * This should ease each request and reduce the risk of crashing. Some post-processing will be required later to merge all the files together into a single .nc file. 
+ * In this way, each month of the selected year(s) will be downloaded separately within a parallel process that runs, for example, maximum 4 jobs at one time.
+ * This should ease each request and reduce the risk of crashing. Some post-processing will be required later to merge all the files together into a single .nc file.
  * This can either be left to be done transparently by MeteoIO or manually for example with the <A href="https://docs.xarray.dev/en/stable/">xarray</A> library for Python.
  *
  * @section netcdf_tricks External tools and tricks to work with NetCDF
@@ -413,16 +413,16 @@ void NetCDFIO::parseInputOutputSection()
 			std::list<std::string> dirlist( FileUtils::readDirectory(inpath, in_nc_ext, is_recursive) );
 			if (dirlist.empty()) std::cerr << "[W] Scanning '" << inpath << "' for NetCDF files (" << in_nc_ext << ") did not return any results\n";
 			dirlist.sort();
-			
+
 			for (std::list<std::string>::const_iterator it = dirlist.begin(); it != dirlist.end(); ++it) {
 				if (!FileUtils::validFileAndPath( *it )) throw InvalidNameException( *it , AT);
 				cache_inmeteo_files.push_back( ncFiles(inpath+"/"+*it, ncFiles::READ, cfg, in_schema_meteo, debug) );
 			}
 		}
-		
+
 		if (cache_inmeteo_files.empty())
 				throw InvalidArgumentException("No valid input meteo files, either provide a list of files or check that there are files within METEOPATH with the NC_EXT="+in_nc_ext+" extension", AT);
-		
+
 		std::vector<std::string> vecTmp;
 		cfg.getValues("STATION", "Input", vecTmp);
 		in_stations = std::set<std::string>(vecTmp.begin(), vecTmp.end());
@@ -481,7 +481,7 @@ void NetCDFIO::scanPath(const std::string& in_path, const std::string& nc_ext, s
 			nc_files.push_back( make_pair(file.getDateRange(), file) );
 		++it;
 	}
-	std::sort(nc_files.begin(), nc_files.end(), 
+	std::sort(nc_files.begin(), nc_files.end(),
 		[](const std::pair<std::pair<Date,Date>,ncFiles> &left, const std::pair<std::pair<Date,Date>,ncFiles> &right) {
 			if (left.first.first < right.first.first) return true;
 			if (left.first.first > right.first.first) return false;
@@ -661,7 +661,7 @@ void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parame
 		const ncFiles::Mode file_mode = (FileUtils::fileExists(file_and_path))? ncFiles::READ : ncFiles::WRITE;
 		cache_grids_out.insert(std::pair<std::string, ncFiles> (file_and_path,ncFiles(file_and_path, file_mode, cfg, out_schema_grid, debug)));
 	}
-	
+
 	if (parameter==MeteoGrids::DEM || parameter==MeteoGrids::SHADE || parameter==MeteoGrids::SLOPE || parameter==MeteoGrids::AZI)
 		cache_grids_out.at(file_and_path).write2DGrid(grid_in, parameter, std::string(), Date()); //do not assign a date to a DEM?
 	else
@@ -760,7 +760,7 @@ ncFiles::ncFiles(const std::string& filename, const Mode& mode, const Config& cf
 		cfg.getValue("NC_LAX_SCHEMA", "Output", lax_schema, IOUtils::nothrow);
 		if (strict_schema && lax_schema)
 			throw InvalidArgumentException("It is not possible to have NC_STRICT_SCHEMA and NC_LAX_SCHEMA true at the same time!", AT);
-		
+
 		//some ACDD metadata will be written anyway, but at least we can skip user-provided fields
 		bool write_acdd = true;
 		cfg.getValue("ACDD_WRITE", "Output", write_acdd, IOUtils::nothrow);
@@ -768,6 +768,8 @@ ncFiles::ncFiles(const std::string& filename, const Mode& mode, const Config& cf
 			acdd.setUserConfig( cfg, "Output", false );
 			const bool enableNCML = cfg.get("ACDD_WRITE_NCML", "Output", false);
 			acdd.setEnableNcML( enableNCML ); //this can be forced to TRUE with a compilation flag
+			const bool enableJson = cfg.get("ACDD_WRITE_JSON", "Output", false);
+			acdd.setEnableJson( enableJson ); //this can be forced to TRUE with a compilation flag
 		}
 		if (FileUtils::fileExists(filename)) initFromFile(filename);
 	} else if (mode==READ) {
@@ -906,12 +908,12 @@ std::set<size_t> ncFiles::getParams() const
 	return available_params;
 }
 
-std::vector<Date> ncFiles::getTimestamps() const 
+std::vector<Date> ncFiles::getTimestamps() const
 {
 	std::vector<Date> results( vecTime.size() );
 	for (size_t ii=0; ii<vecTime.size(); ii++) results[ii] = vecTime[ii].first;
 	return results;
-	
+
 }
 
 Grid2DObject ncFiles::read2DGrid(const std::string& varname)
@@ -977,7 +979,7 @@ Grid2DObject ncFiles::read2DGrid(const size_t& param, const Date& date)
 		const std::vector< std::pair<Date,size_t> >::iterator low = std::lower_bound(vecTime.begin(), vecTime.end(), std::make_pair(date,(size_t)0));
 		if (low->first!=date)
 			throw NoDataException("No "+MeteoGrids::getParameterName( param )+" data at "+date.toString(Date::ISO)+" in file "+file_and_path, AT);
-		
+
 		time_pos = low->second;
 	} else {
 		//no date has been provided, check if this parameter depends on time
@@ -1272,8 +1274,9 @@ void ncFiles::writeMeteo(const std::vector< std::vector<MeteoData> >& vecMeteo, 
 			ncpp::write_1Ddata(ncid, vars[ param ], data, (param==ncpp::TIME));
 		}
 	}
-	
+
 	if (acdd.enableNcML()) acdd.writeNcML( file_and_path );
+	if (acdd.enableJson()) acdd.writeJson( file_and_path );
 
 	if (!keep_output_files_open) {
 		ncpp::close_file(file_and_path, ncid);
@@ -1400,7 +1403,7 @@ std::vector<StationData> ncFiles::readStationData()
 		ncpp::getGlobalAttribute(ncid, "station_name", stationName);
 		if (stationName.empty()) stationName = FileUtils::removeExtension( FileUtils::getFilename(file_and_path) );
 		if (stationID.empty()) stationID = stationName;
-		
+
 		Coords position;
 		if (hasLatLon) {
 			const double lat = read_0Dvariable(ncpp::LATITUDE);
@@ -2055,7 +2058,7 @@ void ncFiles::initDimensionsFromFile()
 			else if (IOUtils::strToLower(dimname)=="time")
 				tmp_dim.param = ncpp::TIME;
 			else continue;
-			
+
 			if (dimensions_map.count( tmp_dim.param )>0) {
 				//if this parameter has already been read, skip it (so the schema naming has priority)
 				if (dimensions_map[ tmp_dim.param ].dimid != -1) continue;
@@ -2097,10 +2100,10 @@ void ncFiles::initVariablesFromFile()
 				tmp_attr.param = ncpp::LONGITUDE;
 			else if (IOUtils::strToLower(varname)=="time")
 				tmp_attr.param = ncpp::TIME;
-			
+
 			if (vars.count( tmp_attr.param )>0) {
 				//if this parameter has already been read, skip it (so the schema naming has priority)
-				if (vars[ tmp_attr.param ].varid != -1) continue; 
+				if (vars[ tmp_attr.param ].varid != -1) continue;
 			}
 		}
 
@@ -2133,7 +2136,7 @@ double ncFiles::read_0Dvariable(const size_t& param) const
 	if (it==vars.end() || it->second.varid==-1) throw InvalidArgumentException("Could not find parameter \""+ncpp::getParameterName(param)+"\" in file \""+file_and_path+"\"", AT);
 	if (!it->second.dimids.empty())
 		throw InvalidFormatException("Trying to open variable '"+it->second.attributes.name+"' in file '"+file_and_path+"' as a 0D variable when it is "+IOUtils::toString(it->second.dimids.size())+"D", AT);
-	
+
 	double data;
 	ncpp::read_data(ncid, it->second, &data);
 	return data;
@@ -2143,7 +2146,7 @@ std::vector<Date> ncFiles::read_1Dvariable() const
 {
 	const std::map<size_t, ncpp::nc_variable>::const_iterator it = vars.find( ncpp::TIME );
 	if (it==vars.end() || it->second.varid==-1) throw InvalidArgumentException("Could not find parameter \""+ncpp::getParameterName(ncpp::TIME)+"\" in file \""+file_and_path+"\"", AT);
-	
+
 	const bool timestamps_as_str = (it->second.attributes.type==NC_CHAR);
 
 	if (!timestamps_as_str) {
@@ -2170,7 +2173,7 @@ std::vector<double> ncFiles::read_1Dvariable(const size_t& param) const
 	if (it==vars.end() || it->second.varid==-1) throw InvalidArgumentException("Could not find parameter \""+ncpp::getParameterName(param)+"\" in file \""+file_and_path+"\"", AT);
 	if (it->second.dimids.size()!=1)
 		throw InvalidFormatException("Trying to open variable '"+it->second.attributes.name+"' in file '"+file_and_path+"' as a 1D variable when it is "+IOUtils::toString(it->second.dimids.size())+"D", AT);
-	
+
 	const size_t length = read_1DvariableLength(it->second);
 
 	std::vector<double> results( length );
@@ -2201,7 +2204,7 @@ std::vector<std::string> ncFiles::read_1Dstringvariable(const size_t& param) con
 	std::vector<std::string> results(length);
 	for (size_t ii=0; ii<length; ii++)
 		results[ii] = std::string( &data[ii*strMaxLen], strMaxLen );
-	
+
 	free( data );
 	return results;
 }

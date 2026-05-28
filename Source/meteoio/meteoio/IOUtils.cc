@@ -133,7 +133,7 @@ void stripComments(std::string& str)
 		const size_t pound_found_idx = str.find('#', pos);
 		const size_t semi_found_idx = str.find(';', pos);
 		pos = std::min(pound_found_idx, semi_found_idx);
-		
+
 		if (pos != std::string::npos) {
 			if (pos>0 && str[pos-1]=='\\') {
 				str.erase(pos-1, 1); //remove the escape character
@@ -160,7 +160,7 @@ void cleanEscapedCharacters(std::string& str, const std::vector<char>& escaped_c
 		do {
 			//find_first_of searches for any of the given chars while find search for an exact match...
 			pos = str.find(escape_char, pos);
-			
+
 			if (pos != std::string::npos) {
 				if (pos>0 && str[pos-1]=='\\') {
 					str.erase(pos-1, 1); //remove the escape character
@@ -257,7 +257,7 @@ void cleanFieldName(std::string& field, const bool& clean_whitespaces, const cha
 size_t count(const std::string &input, const std::string& search)
 {
 	if (search.empty() || input.empty()) return std::string::npos;
-	
+
 	const size_t len = search.length();
 	size_t pos = input.find(search);
 	size_t count = 0;
@@ -360,7 +360,7 @@ std::string getLogName()
 
 std::string getHostName() {
 	static const size_t len = 4096;
-	
+
 	//allow the user to set the HOSTNAME environment variable
 	//in order to force the hostname seen by MeteoIO
 	char *tmp;
@@ -991,6 +991,47 @@ std::string escapeXml(const std::string& input)
         }
     }
     return output;
+}
+
+std::string escapeJson(const std::string& input)
+{
+	std::string output;
+	for (char c : input) {
+		switch (c) {
+			case '"':
+				output += "\\\"";
+				break;
+			case '\\':
+				output += "\\\\";
+				break;
+			case '\b':
+				output += "\\b";
+				break;
+			case '\f':
+				output += "\\f";
+				break;
+			case '\n':
+				output += "\\n";
+				break;
+			case '\r':
+				output += "\\r";
+				break;
+			case '\t':
+				output += "\\t";
+				break;
+			default:
+				// Escape non-printable ASCII characters
+				if (static_cast<unsigned char>(c) < 0x20) {
+					char buf[7];
+					snprintf(buf, sizeof(buf), "\\u%04x", static_cast<unsigned char>(c));
+					output += buf;
+				} else {
+					output += c;
+				}
+		}
+	}
+
+	return output;
 }
 
 } //namespace IOUtils

@@ -383,9 +383,9 @@ Please include meteoio_parametergroups before use!
 			<o><parameter key="@UNALTERED_NODATA" label="Unaltered n/a:" type="number" format="integer" default="255" notoggle="true"/></o>
 		</parameter>
 	</parametergroup>
-	
-	
-	
+
+
+
 	<!-- Input keys for output files versioning -->
 	<parametergroup name="OUTPUT_FILES_VERSIONING">
 		<parameter key="FILES_VERSIONING" type="alternative" optional="true">
@@ -450,7 +450,7 @@ Please include meteoio_parametergroups before use!
 		</frame>
 		<frame caption="Origin of the data" collapsed="true">
 			<parameter key="ACDD_SOURCE" type="text" size="medium"><help>the source and method of production of the original data</help></parameter>
-		
+
 			<parameter key="ACDD_COVERAGE_CONTENT_TYPE" type="alternative">
 				<o value="image"/>
 				<o value="thematicClassification"/>
@@ -462,7 +462,7 @@ Please include meteoio_parametergroups before use!
 				<o value="coordinate"/>
 				<help>Controlled vocabulary used to describe the source of the data</help>
 			</parameter>
-			
+
 			<parameter key="ACDD_PROJECT" type="text" size="medium" bold="true"><help>the scientific project that created the data</help></parameter>
 			<parameter key="ACDD_PROGRAM" type="text" size="medium"><help>the overarching program(s) of which the dataset is a part;</help></parameter>
 			<parameter key="ACDD_ACTIVITY_TYPE" type="alternative">
@@ -532,10 +532,15 @@ Please include meteoio_parametergroups before use!
 				<help>Controlled vocabulary used to describe the production status for the dataset, see &lt;a href="https://html-preview.github.io/?url=https://github.com/metno/mmd/blob/master/doc/mmd-specification.html#dataset-production-status-types"&gt;the specification&lt;/a&gt; for more</help>
 			</parameter>
 		</frame>
-		<parameter key="ACDD_WRITE_NCML" label="Create an additional NcML file?" type="alternative">
+		<!--<parameter key="ACDD_WRITE_NCML" label="Create an additional NcML file?" type="alternative">
 			<option value="TRUE"/>
 			<option value="FALSE"/>
 			<help>Should ACDD metadata also be written in a separate &lt;a href="https://docs.unidata.ucar.edu/netcdf-java/5.6/userguide/ncml_overview.html"&gt;NcML file&lt;/a&gt; alongside the data file (default: false)</help>
+		</parameter>-->
+		<parameter key="ACDD_WRITE_JSON" label="Create an additional json file containing a copy of the metadata?" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>Should ACDD metadata also be written in a separate &lt;a href="https://en.wikipedia.org/wiki/JSON"&gt;Json&lt;/a&gt; file alongside the data file (default: false)</help>
 		</parameter>
 	</parametergroup>
 

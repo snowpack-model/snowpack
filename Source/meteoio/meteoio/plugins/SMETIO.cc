@@ -54,7 +54,7 @@ using namespace PLUGIN;
  * @section smetio_keywords Keywords
  * This plugin uses the following keywords:
  * - METEOPATH: meteo files directory where to read/write the meteofiles; [Input] and [Output] sections
- * - METEOFILE#: input filename (in METEOPATH). As many meteofiles as needed may be specified. If nothing is specified, the METEOPATH directory 
+ * - METEOFILE#: input filename (in METEOPATH). As many meteofiles as needed may be specified. If nothing is specified, the METEOPATH directory
  * will be scanned for files ending in ".smet" and sorted in ascending order;
  * - METEOPATH_RECURSIVE: if set to true, the scanning of METEOPATH is performed recursively (default: false); [Input] section;
  * - SNOWPACK_SLOPES: if set to true and no slope information is found in the input files,
@@ -181,7 +181,7 @@ void SMETIO::parseInputOutputSection()
 			std::cerr << "[W] The STATION# syntax has been deprecated for the SMET input plugin, please rename these keys as METEOFILE#!\n";
 			//throw InvalidArgumentException("The STATION# syntax has been deprecated for the SMET plugin, please rename these keys as METEOFILE#!", AT);
 		}
-		
+
 		cfg.getValue("SNOWPACK_SLOPES", "Input", snowpack_slopes, IOUtils::nothrow);
 		const std::string inpath = cfg.get("METEOPATH", "Input");
 		std::vector<std::string> vecFilenames;
@@ -210,6 +210,8 @@ void SMETIO::parseInputOutputSection()
 			acdd.setUserConfig(cfg, "Output", false); //do not allow multi-line keys
 			const bool enableNCML = cfg.get("ACDD_WRITE_NCML", "Output", false);
 			acdd.setEnableNcML( enableNCML ); //this can be forced to TRUE with a compilation flag
+			const bool enableJSON = cfg.get("ACDD_WRITE_JSON", "Output", false);
+			acdd.setEnableJson( enableJSON ); //this can be forced to TRUE with a compilation flag
 		}
 
 		cfg.getValue("METEOPATH", "Output", outpath, IOUtils::nothrow);

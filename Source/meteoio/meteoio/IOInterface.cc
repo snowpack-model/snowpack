@@ -17,6 +17,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/IOInterface.h>
+#include <limits>
 
 namespace mio {
 
@@ -111,7 +112,7 @@ void IOInterface::readLanduse(Grid2DObject& /*landuse_out*/)
 	throw IOException("Nothing implemented here", AT);
 }
 
-void IOInterface::readGlacier(Grid2DObject& /*landuse_out*/) 
+void IOInterface::readGlacier(Grid2DObject& /*landuse_out*/)
 {
 	throw IOException("Nothing implemented here", AT);
 }
@@ -199,19 +200,7 @@ std::string IOInterface::buildVersionString(const VersioningType& versioning, co
 
 	start_dt.setTimeZone(tz);
 	end_dt.setTimeZone(tz);
-
-	if (versioning==DATA_START) return "_"+start_dt.toString(Date::NUM);
-	if (versioning==DATA_END) return "_"+end_dt.toString(Date::NUM);
-	if (versioning==DATA_YEARS) {
-		const int startYear = start_dt.getYear();
-		const int endYear = end_dt.getYear();
-
-		if (startYear==endYear) return "_"+IOUtils::toString(startYear);
-		return "_"+IOUtils::toString(startYear)+"_"+IOUtils::toString(endYear);
-	}
-
-	//this should not be reached as we test for all members of the enum above
-	return std::string();
+	return datesVersionStr(versioning, start_dt, end_dt);
 }
 
 
@@ -229,7 +218,12 @@ std::string IOInterface::buildVersionString(const VersioningType& versioning, co
 
 	start_dt.setTimeZone(tz);
 	end_dt.setTimeZone(tz);
+	return datesVersionStr(versioning, start_dt, end_dt);
+}
 
+
+std::string IOInterface::datesVersionStr(const VersioningType& versioning, const Date& start_dt, const Date& end_dt)
+{
 	if (versioning==DATA_START) return "_"+start_dt.toString(Date::NUM);
 	if (versioning==DATA_END) return "_"+end_dt.toString(Date::NUM);
 	if (versioning==DATA_YEARS) {
@@ -245,7 +239,7 @@ std::string IOInterface::buildVersionString(const VersioningType& versioning, co
 }
 
 
-void IOInterface::mergeLinesRanges(std::vector< LinesRange >& lines_specs)
+void LinesRange::mergeLinesRanges(std::vector< LinesRange >& lines_specs)
 {
 	std::sort(lines_specs.begin(), lines_specs.end()); //in case of identical start dates, the oldest end date comes first
 	for (size_t ii=0; ii<(lines_specs.size()-1); ii++) {
@@ -262,16 +256,28 @@ void IOInterface::mergeLinesRanges(std::vector< LinesRange >& lines_specs)
 	}
 }
 
+const std::string LinesRange::toString() const {
+	std::ostringstream os;
+	os << "[" << start << " - ";
+	if (end == std::numeric_limits<size_t>::max()) {
+		os << "∞";
+	} else {
+		os << end;
+	}
+	os << "]";
+	return os.str();
+}
+
 //we assume that the first line is line 1
 //if we don't receive any specifications, we return an empty vector (both for an empty EXCLUDE or an empty ONLY)
-std::vector< LinesRange > IOInterface::initLinesRestrictions(const std::string& args, const std::string& where, const bool& negate)
+std::vector< LinesRange > LinesRange::getLinesRestrictions(const std::string& args, const std::string& where, const bool& negate)
 {
 	std::vector<LinesRange> lines_specs;
 	if (args.empty()) return lines_specs;
-	
+
 	std::vector<std::string> vecString;
 	IOUtils::readLineToVec(args, vecString, ',');
-	
+
 	for (const std::string& restr_spec : vecString) {
 		size_t l1;
 		const size_t delim_pos = restr_spec.find("-");
@@ -286,17 +292,22 @@ std::vector< LinesRange > IOInterface::initLinesRestrictions(const std::string& 
 			const std::string arg2( restr_spec.substr(delim_pos+1) );
 			if (!IOUtils::convertString(l1, IOUtils::trim(arg1) ))
 				throw InvalidFormatException("Could not process line number restriction "+arg1+" for "+where, AT);
-			if (!IOUtils::convertString(l2, IOUtils::trim(arg2) ))
-				throw InvalidFormatException("Could not process line number restriction "+arg2+" for "+where, AT);
+			const std::string trimmed_arg2 = IOUtils::trim(arg2);
+			if (trimmed_arg2 == "∞") {
+				l2 = std::numeric_limits<size_t>::max();
+			} else {
+				if (!IOUtils::convertString(l2, trimmed_arg2))
+					throw InvalidFormatException("Could not process line number restriction "+arg2+" for "+where, AT);
+			}
 			lines_specs.push_back( LinesRange(l1, l2) );
 		}
 	}
 
 	if (lines_specs.empty()) return lines_specs;
-	
+
 	//now sort the vector and merge overlapping ranges
-	mergeLinesRanges(lines_specs);
-	
+	LinesRange::mergeLinesRanges(lines_specs);
+
 	if (!negate) {
 		return lines_specs;
 	} else {
@@ -304,7 +315,7 @@ std::vector< LinesRange > IOInterface::initLinesRestrictions(const std::string& 
 		//trick: remember that a [] ONLY range is converted to a ][ EXCLUDE range!
 		std::vector<LinesRange> negative_lines_specs;
 		size_t ii_exclude_start = 0;
-		
+
 		for (const auto& spec : lines_specs) {
 			const size_t only_start = spec.start;
 			if (only_start>1)
@@ -313,7 +324,7 @@ std::vector< LinesRange > IOInterface::initLinesRestrictions(const std::string& 
 			ii_exclude_start = spec.end+1;
 		}
 		negative_lines_specs.push_back( LinesRange(ii_exclude_start, static_cast<size_t>(-1)) );
-		
+
 		return negative_lines_specs;
 	}
 }

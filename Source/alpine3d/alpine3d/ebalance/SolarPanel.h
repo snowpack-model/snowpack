@@ -18,7 +18,7 @@ class SolarPanel{
 		void setSP(const mio::Date timestamp, const double solarAzimuth, const double solarElevation);
 		void setGridRadiation(const mio::Array2D<double>& in_albedo, const mio::Array2D<double>& in_direct,
                           const mio::Array2D<double>& in_diffuse, const mio::Array2D<double>&
-                          in_direct_unshaded_horizontal, const double solarAzimuth, const double solarElevation);
+                          in_direct_unshaded_horizontal, const double& solarAzimuth, const double& solarElevation);
 
 		void initTerrain(size_t N_terrain_in, size_t M_terrain_in);
 		void setTLists(mio::Array4D<double> TList1, mio::Array4D<double> TList2, mio::Array4D<double> TList3, mio::Array4D<double> TList4);

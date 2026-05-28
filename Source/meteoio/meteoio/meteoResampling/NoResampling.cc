@@ -40,7 +40,7 @@ std::string NoResampling::toString() const
 	return ss.str();
 }
 
-void NoResampling::resample(const std::string& /*stationHash*/, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
+bool NoResampling::resample(const std::string& /*stationHash*/, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
                             const std::vector<MeteoData>& vecM, MeteoData& md)
 {
 	if (index >= vecM.size())
@@ -50,10 +50,14 @@ void NoResampling::resample(const std::string& /*stationHash*/, const size_t& in
 		const double value = vecM[index](paramindex);
 		if (value != IOUtils::nodata) {
 			md(paramindex) = value; //propagate value
+			return true;
 		}
 	}
 
-	return;
+	//HACK should we return true here? The user requested no resampling, we did not resample so the value remains nodata...
+	//I guess for the use case (overwritting a resampling algo coming from an included cfg file) it makes sense to return
+	//false so the processing can move on to the next algorithm.
+	return false;
 }
 
 } //namespace

@@ -30,7 +30,7 @@
 namespace mio {
 /**
  * @class ACDD
- * @brief This class contains and handles NetCDF Attribute Conventions Dataset Discovery attributes (see 
+ * @brief This class contains and handles NetCDF Attribute Conventions Dataset Discovery attributes (see
  * <A href="http://wiki.esipfed.org/index.php?title=Category:Attribute_Conventions_Dataset_Discovery">ACDD</A>).
  * @details The final value of any acdd field is provided by three sources, any attempts
  * stops as soon as some value has been found: 1. the INI configuration key; 2. reading the matching environment variable; 3. some hard-coded
@@ -81,18 +81,18 @@ namespace mio {
  *     - ACDD_OPERATIONAL_STATUS: The current operational status of the product. Choose from the <a href="https://html-preview.github.io/?url=https://github.com/metno/mmd/blob/master/doc/mmd-specification.html#operational-status">controlled vocabulary</a>;
  *     - ACDD_DATASET_PRODUCTION_STATUS: the production status of the product. Choose from the <a href="https://html-preview.github.io/?url=https://github.com/metno/mmd/blob/master/doc/mmd-specification.html#dataset-production-status-types">controlled vocabulary</a>;
  *
- * 
- * This list contains all mandatory ACDD fields as listed at the <a href="https://adc.met.no/node/4">Arctic Data Centre</a> as well as most of the 
- * optional fields (please note that the geospatial and time coverage are automatically generated based on the data itself and the history is 
- * also automatically handled). 
- * 
- * \note It is possible to write an <a href="https://docs.unidata.ucar.edu/netcdf-java/5.6/userguide/ncml_overview.html">NcML</a> 
+ *
+ * This list contains all mandatory ACDD fields as listed at the <a href="https://adc.met.no/node/4">Arctic Data Centre</a> as well as most of the
+ * optional fields (please note that the geospatial and time coverage are automatically generated based on the data itself and the history is
+ * also automatically handled).
+ *
+ * \note It is possible to write an <a href="https://docs.unidata.ucar.edu/netcdf-java/5.6/userguide/ncml_overview.html">NcML</a>
  * file containing the ACDD metadata alongside each output data file. This is mostly aimed at data catalogs (such as for the meteoio
  * webservice) that can therefore easily retrieve metadata without even having to open the data file itself (which would also require
  * them to have a parser for each supported file format). This is controlled by the ACDD_WRITE_NCML boolean configuration key that can
  * also be forced to TRUE with the FORCE_NCML compilation flag (in order to enforce the creation of NcML file on a server for example).
- * 
- * Example of ACDD configuration for a NetCDF file generated for the <a href="https://public.wmo.int/en">WMO</a>'s 
+ *
+ * Example of ACDD configuration for a NetCDF file generated for the <a href="https://public.wmo.int/en">WMO</a>'s
  * <a href="https://globalcryospherewatch.org/">Global Cryosphere Watch</a> (GCW) <a href="https://gcw.met.no/metsis/search">data portal</a>:
  * @code
  * [Output]
@@ -126,27 +126,27 @@ class ACDD {
 		struct VARS_ATTR; //forward declaration
 		typedef struct ACDD_ATTR acdd_attrs;
 		typedef struct VARS_ATTR vars_attr;
-		
+
 		/**
 		* @brief Constructor, the argument allows the object to know if the acdd metadata should be written out or not
 		* @param[in] set_enable enable ACDD support?
 		*/
 		ACDD(const bool& set_enable);
-		
+
 		//defining some iterators so the callers can loop over all available attributes
 		using const_iterator = std::map<std::string, acdd_attrs>::const_iterator;
 		const_iterator cbegin() const noexcept { return attributes.cbegin(); }
 		const_iterator cend() const noexcept { return attributes.cend(); }
-		
+
 		/**
 		* @brief Set an internal boolean as a helper for the caller to know if ACDD support should be enabled or not. Moreover, it
 		* initializes the attributes map if not already done.
 		* @param[in] i_enable enable ACDD support?
 		*/
 		void setEnabled(const bool& i_enable);
-		
+
 		void setUserConfig(const mio::Config& cfg, const std::string& section, const bool& allow_multi_line=true);
-		
+
 		void addAttribute(const std::string& att_name, const std::string& att_value, const Mode& mode=MERGE);
 		void addAttribute(const std::string& att_name, const double& att_value, const Mode& mode=MERGE);
 
@@ -163,21 +163,21 @@ class ACDD {
 		bool isEnabled() const {return enabled;}
 
 		std::string getAttribute(std::string &att_name) const;
-		
+
 		void setGeometry(const mio::Grid2DObject& grid, const bool& isLatLon);
 		void setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMeteo, const bool& isLatLon);
 		void setGeometry(const mio::Coords& location, const bool& isLatLon);
 		void setGeometry(const std::set< mio::Coords >& vecLocation, const bool& isLatLon);
-		
+
 		void setTimeCoverage(const std::vector< std::vector<mio::MeteoData> >& vecMeteo);
 		void setTimeCoverage(const std::vector<mio::MeteoData>& vecMeteo);
 		void setTimeCoverage(const std::vector<std::string>& vec_timestamp, const double& TZ);
 
-		
+
 		//support for NcML
 		/**
 		* @brief Should an <a href="https://docs.unidata.ucar.edu/netcdf-java/5.6/userguide/ncml_overview.html">NcML</a> file be written
-		* alongside the data file?  
+		* alongside the data file?
 		* \note Please notice that this can be forced set to true by a compilation flag independently of the argument
 		* provided to this call (as is necessary for the meteoio webservice).
 		* @param[in] i_enable set to true if an NcML file should be produced (see caveat above).
@@ -185,36 +185,49 @@ class ACDD {
 		void setEnableNcML(const bool& i_enable);
 		bool enableNcML() const {return enable_ncml;}
 		void writeNcML(const std::string& data_filename) const;
+
+		//support for JSON metadata
+		/**
+		* @brief Should a <a href="https://www.rfc-editor.org/rfc/rfc8259">json</a> file containing the metadata be written alongside the data file?
+		* \note Please notice that this can be forced set to true by a compilation flag independently of the argument
+		* provided to this call (as is necessary for the meteoio webservice).
+		* @param[in] i_enable set to true if a json file for metadata should be produced (see caveat above).
+		*/
+		void setEnableJson(const bool& i_enable);
+		bool enableJson() const {return enable_json;}
+		void writeJson(const std::string& data_filename) const;
+
 		void addDimension( const std::string& var_name, const std::string& var_long_name, const size_t& length);
 		void addVariable( const std::string& var_name, const std::string& var_long_name, const std::string& var_units);
-		
+
 		std::string toString() const;
-		
+
 	private:
 		static std::map<std::string, acdd_attrs> initAttributes();
 		static std::set< std::pair< std::string, std::set<std::string> > > initLinks();
 		static size_t countCommas(const std::string& str);
 		void checkLinkedAttributes();
-		
+
 		static bool isWigosID(const std::string& str);
 		std::map<std::string, acdd_attrs> attributes; //all the ACDD attributes with their properties
 		std::set< std::pair< std::string, std::set<std::string> > > linked_attributes; //attribute names that are linked together, ie must have the same number of sub-elements (comma delimited)
 		std::set< vars_attr > dimensions, variables;
 		bool enabled; //helper boolean for callers to know if this object should be used or not
 		bool enable_ncml; //helper boolean for callers to trigger the writing of NcML files together with the data file
+		bool enable_json; //helper boolean for callers to trigger the writing of json metadata files together with the data file
 };
 
 struct ACDD::VARS_ATTR {	//TODO at some point, this should be stored in MeteoData as timeseries metadata
 	VARS_ATTR(const std::string& i_name, const std::string& i_standard_name, const std::string& i_units) : name(i_name), standard_name(i_standard_name), units(i_units), length(IOUtils::npos) {}
 	VARS_ATTR(const std::string& i_name, const std::string& i_standard_name, const size_t& i_length) : name(i_name), standard_name(i_standard_name), units(), length(i_length) {}
-	
+
 	//"units" is ignored here, since with the same name and standard_name, they would have the same units
 	bool operator<(const ACDD::VARS_ATTR& other) const {
         return (name < other.name) ||
                (name == other.name && standard_name < other.standard_name) ||
                (name == other.name && standard_name == other.standard_name && length < other.length);
     }
-	
+
 	std::string name, standard_name, units;
 	size_t length;
 };

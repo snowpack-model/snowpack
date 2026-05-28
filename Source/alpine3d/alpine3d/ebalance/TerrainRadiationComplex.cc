@@ -592,10 +592,11 @@ bool TerrainRadiationComplex::ReadViewList()
 //########################################################################################################################
 
 /**
-* @brief Computes direct, diffuse and terrain radiation for each gridpoint. Terrain radiation
+* @brief Computes direct, diffuse and terrain radiation for each gridpoint.
 * @param[out] direct Direct short wave radiation component
 * @param[out] diffuse Diffuse short wave radiation component
 * @param[out] terrain Terrain reflected short wave radiation component
+* @param[in] direct_unshaded_horizontal 
 * @param[in] total_ilwr Total Incoming Long Wave radiation (unused)
 * @param[in] sky_ilwr Incoming Long Wave radiation coming from the sky (unused)
 * @param[in] terrain_ilwr Incoming Long Wave radiation emitted by the terrain (unused)
@@ -605,7 +606,7 @@ bool TerrainRadiationComplex::ReadViewList()
 void TerrainRadiationComplex::getRadiation(mio::Array2D<double> &direct, mio::Array2D<double> &diffuse,
 										   mio::Array2D<double> &terrain, const mio::Array2D<double> &direct_unshaded_horizontal, const mio::Array2D<double> &/*total_ilwr*/,
 										   mio::Array2D<double> &/*sky_ilwr*/, mio::Array2D<double> &/*terrain_ilwr*/,
-										   double solarAzimuth, double solarElevation)
+										   const double& solarAzimuth, const double& solarElevation)
 {
 	MPIControl &mpicontrol = MPIControl::instance();
 
@@ -1145,7 +1146,7 @@ double TerrainRadiationComplex::getSkyViewFactor(size_t ii_dem, size_t jj_dem, s
 * @param[in] solarElevation: from horizontal in degrees
 * @param[out] v_out: normalized vector pointing towards the sun
 */
-void TerrainRadiationComplex::getVectorSun(double solarAzimuth, double solarElevation, Vec3D &v_out)
+void TerrainRadiationComplex::getVectorSun(const double& solarAzimuth, const double& solarElevation, Vec3D &v_out)
 {
 	v_out[0] = cos(solarElevation * Cst::to_rad) * sin(solarAzimuth * Cst::to_rad);
 	v_out[1] = cos(solarElevation * Cst::to_rad) * cos(solarAzimuth * Cst::to_rad);

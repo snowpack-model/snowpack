@@ -28,7 +28,8 @@
 
 /**
  * @brief Computes interception of precipitation and radiation, and reduction of windspeed
- * in a canopy layer above thesnow or soil surface.
+ * in a canopy layer above the snow or soil surface.
+ * @details 
  * This has been published in Gouttevin, I., M. Lehning, T. Jonas, D. Gustafsson, and Meelis Mölder,
  * <i>"A two-layer canopy model with thermal inertia for an improved snowpack energy balance below needleleaf forest
  * (model SNOWPACK, version 3.2. 1, revision 741)."</i>, Geoscientific Model Development <b>8.8</b>, pp 2379-2398, 2015.

@@ -104,7 +104,7 @@ class MeteoObj
 		MeteoObj(const mio::Config& config, const mio::DEMObject& in_dem);
 		~MeteoObj();
 
-		void setSkipWind(const bool& i_skipWind);
+		void setSkipWind(const bool& i_skipWind) {skipWind = i_skipWind;}
 		void prepare(const mio::Date& in_date);
 		void get(const mio::Date& in_date,
 		         mio::Grid2DObject& ta,
@@ -124,7 +124,7 @@ class MeteoObj
 		void checkMeteoForcing(const mio::Date& calcDate);
 		void setGlacierMask(const mio::Grid2DObject& glacierMask);
 		void setDEM(const mio::DEMObject& in_dem);
-		double getTiming() const;
+		double getTiming() const {return timer.getElapsed();}
 
 	private:
 		static void checkLapseRate(const std::vector<mio::MeteoData>& i_vecMeteo, const mio::MeteoData::Parameters& param);

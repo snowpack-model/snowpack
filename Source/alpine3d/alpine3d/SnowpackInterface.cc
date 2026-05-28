@@ -758,13 +758,13 @@ void SnowpackInterface::setVwDrift(const Grid2DObject& new_vw_drift, const mio::
 
 /**
  * @brief get values from Energy Balance
- * @param[in] shortwave_in is the 2D double Array map of ISWR [W m-2]
- * @param[in] longwave_in is the 2D double Array map of ILWR [W m-2]
- * @param[in] diff_in is the 2D double Array map of Diffuse radiation from the sky [W m-2]
- * @param[in] terrain_shortwave_in 2D double Array map of ISWR reflected by the surrounding terrain [W m-2]
- * @param[in] terrain_longwave_in2D double Array map of ILWR emitted by the surrounding terrain [W m-2]
- * @param[in] solarElevation_in double of Solar elevation to be used for Canopy (in dec)
- * @param[in] timestamp is the time of the calculation step from which this new values are comming
+ * @param[in] shortwave_in gridded ISWR [W/m2]
+ * @param[in] longwave_in gridded ILWR [W/m2]
+ * @param[in] diff_in gridded Diffuse radiation from the sky [W/m2]
+ * @param[in] terrain_shortwave_in gridded ISWR reflected by the surrounding terrain [W/m2]
+ * @param[in] terrain_longwave_in gridded ILWR emitted by the surrounding terrain [W/m2]
+ * @param[in] solarElevation_in Solar elevation to be used for Canopy (in degrees above the horizontal)
+ * @param[in] timestamp time of the calculation step from which this new values are comming
  */
 void SnowpackInterface::setRadiationComponents(const mio::Array2D<double>& shortwave_in,
      const mio::Array2D<double>& longwave_in, const mio::Array2D<double>& diff_in,
@@ -793,7 +793,7 @@ void SnowpackInterface::setRadiationComponents(const mio::Array2D<double>& short
 
 /**
  * @brief Request specific grid by parameter type
- * @param param parameter
+ * @param param parameter to retrieve the gridded values of
  * @return 2D output grid (empty if the requested parameter was not available)
  */
 mio::Grid2DObject SnowpackInterface::getGrid(const SnGrids::Parameters& param) const
@@ -1389,113 +1389,139 @@ void SnowpackInterface::readSnowCover(const std::string& GRID_sno, const std::st
 }
 
 /**
- * @brief Calculates lateral flow
+ * @brief Calculates lateral flow based on DEMON algorithm
+ *
+ * Citation DEMON algorithm:
+ *   Costa-Cabral, M. C. and S. J. Burges (1994), Digital Elevation Model Networks (DEMON): A model of flow over hillslopes
+ *   for computation of contributing and dispersal areas, Water Resour. Res., 30(6), 1681–1692, doi:10.1029/93WR03512.
+ *
  * @author Nander Wever
  */
 void SnowpackInterface::calcLateralFlow()
 {
 	std::vector<SnowStation*> snow_pixel;
-	std::vector< std::pair <size_t,size_t>> coords;
-	// Retrieve snow stations, stored raw major
+	std::vector<std::pair<size_t, size_t>> coords;
+	// Retrieve snow stations as pointers
 	for (size_t ii = 0; ii < workers.size(); ii++) {
 		workers[ii]->getLateralFlow(snow_pixel);
-		for(auto& p : workers[ii]->SnowStationsCoord){
+		for (auto& p : workers[ii]->SnowStationsCoord) {
 			coords.push_back(p);
 		}
 	}
+
 	// Translate lateral flow in source/sink term
-	size_t ix=0;											// The source cell x coordinate
-	int ixd=-1, iyd=-1;										// The destination cell x and y coordinates
 	size_t errCount = 0;
-	#pragma omp parallel for schedule(dynamic, 1) reduction(+: errCount)
-	for (size_t ii = 0; ii < workers.size(); ii++) {						// Cycle over all workers
+
+	// Declare the 8 possible neighbors
+	const std::vector<std::pair<int, int>> neighbors = {
+		{-1, -1}, {0, -1}, {1, -1},
+		{-1,  0},          {1,  0},
+		{-1,  1}, {0,  1}, {1,  1}
+	};
+
+	//#pragma omp parallel for schedule(dynamic, 1) reduction(+: errCount)
+	for (size_t ii = 0; ii < snow_pixel.size(); ++ii) {
+		SnowStation* sp = snow_pixel[ii];
+		size_t ix = coords.at(ii).first;
+		size_t iy = coords.at(ii).second;
+
 		try {
-			for (size_t jj = 0; jj < worker_deltax[ii]; jj++) {				// Cycle over x range per worker
-				for (size_t iy = 0; iy < dimy; iy++) {					// Cycle over y
-					ix = worker_startx[ii] + jj;
-					const size_t index_SnowStation_src = ix + iy*dimx;		// Index of source cell of water
-					double tmp_dist = -1;						// Cell distance
-					if (snow_pixel[index_SnowStation_src] != NULL) {		// Make sure it is not a NULL pointer (in case of skipped cells)
-						// Now determine destination cell for the water, based on azimuth
-						if ((snow_pixel[index_SnowStation_src]->meta.getAzimuth() > 337.5 && snow_pixel[index_SnowStation_src]->meta.getAzimuth() <= 360.) || (snow_pixel[index_SnowStation_src]->meta.getAzimuth() >=0. && snow_pixel[index_SnowStation_src]->meta.getAzimuth() <= 22.5)) {
-							ixd = ix;
-							iyd = iy-1;
-							tmp_dist = dem.cellsize;
-						} else if (snow_pixel[index_SnowStation_src]->meta.getAzimuth() > 22.5 || snow_pixel[index_SnowStation_src]->meta.getAzimuth() < 67.5) {
-							ixd = ix+1;
-							iyd = iy-1;
-							tmp_dist = mio::Cst::Sqrt2 * dem.cellsize;
-						} else if (snow_pixel[index_SnowStation_src]->meta.getAzimuth() > 67.5 || snow_pixel[index_SnowStation_src]->meta.getAzimuth() < 112.5) {
-							ixd = ix+1;
-							iyd = iy;
-							tmp_dist = dem.cellsize;
-						} else if (snow_pixel[index_SnowStation_src]->meta.getAzimuth() > 112.5 || snow_pixel[index_SnowStation_src]->meta.getAzimuth() < 157.5) {
-							ixd = ix+1;
-							iyd = iy+1;
-							tmp_dist = mio::Cst::Sqrt2 * dem.cellsize;
-						} else if (snow_pixel[index_SnowStation_src]->meta.getAzimuth() > 157.5 || snow_pixel[index_SnowStation_src]->meta.getAzimuth() < 202.5) {
-							ixd = ix;
-							iyd = iy+1;
-							tmp_dist = dem.cellsize;
-						} else if (snow_pixel[index_SnowStation_src]->meta.getAzimuth() > 202.5 || snow_pixel[index_SnowStation_src]->meta.getAzimuth() < 247.5) {
-							ixd = ix-1;
-							iyd = iy+1;
-							tmp_dist = mio::Cst::Sqrt2 * dem.cellsize;
-						} else if (snow_pixel[index_SnowStation_src]->meta.getAzimuth() > 247.5 || snow_pixel[index_SnowStation_src]->meta.getAzimuth() < 292.5) {
-							ixd = ix-1;
-							iyd = iy;
-							tmp_dist = dem.cellsize;
-						} else if (snow_pixel[index_SnowStation_src]->meta.getAzimuth() > 292.5 || snow_pixel[index_SnowStation_src]->meta.getAzimuth() < 337.5) {
-							ixd = ix-1;
-							iyd = iy-1;
-							tmp_dist = mio::Cst::Sqrt2 * dem.cellsize;
-						} else {
-							// Undefined aspect, don't route the lateral flow by setting destination cell outside domain
-							ixd=-1;
-							iyd=-1;
+			if (sp != nullptr) {
+				double sum_slope = 0.;
+				std::vector<double> slopes(8, 0.);
+
+				// Calculate slope to each neighbor
+				for (size_t i = 0; i < 8; i++) {
+					int nx = ix + neighbors[i].first;
+					int ny = iy + neighbors[i].second;
+					if (nx >= 0 && nx < int(dimx) && ny >= 0 && ny < int(dimy)) {
+						double dz = dem(ix, iy) - dem(nx, ny);
+						if (dz > 0) { // Only consider downhill neighbors
+							double distance = (abs(neighbors[i].first) + abs(neighbors[i].second) == 2) ?
+							                  (mio::Cst::Sqrt2 * dem.cellsize) : dem.cellsize;
+							slopes[i] = dz / distance;
+							sum_slope += slopes[i];
 						}
-						if (ixd >= 0 && iyd >= 0 && ixd < int(dimx) && iyd < int(dimy)) {								// Check if destination cell is inside domain
-							const size_t index_SnowStation_dst = ixd + iyd*dimx;							// Destination cell of water
-							if (snow_pixel[index_SnowStation_dst] != NULL) {							// Make sure destination cell is not a NULL pointer (in case of skipped cells)
-								for (size_t n=0; n < snow_pixel[index_SnowStation_src]->getNumberOfElements(); n++) {			// Loop over all layers in source cell
-									for (size_t nn=0; nn < snow_pixel[index_SnowStation_dst]->getNumberOfElements(); nn++) {	// Loop over all layers in destination cell
-										// Now check if deposition date is equal or newer (i.e., never put lateral water in an older layer, except when we cycled over all layers and we are at the top layer)
-										if (snow_pixel[index_SnowStation_dst]->Edata[nn].depositionDate >= snow_pixel[index_SnowStation_src]->Edata[n].depositionDate
-											|| nn == snow_pixel[index_SnowStation_dst]->getNumberOfElements()-1) {
-											// The flux into the pixel is a source term for the destination cell
-											snow_pixel[index_SnowStation_dst]->Edata[nn].lwc_source += snow_pixel[index_SnowStation_src]->Edata[n].SlopeParFlux / tmp_dist * (snow_pixel[index_SnowStation_dst]->Edata[nn].L / snow_pixel[index_SnowStation_src]->Edata[n].L);
-											// The flux out of the pixel is a sink term for the source cell
-											snow_pixel[index_SnowStation_src]->Edata[n].lwc_source -= snow_pixel[index_SnowStation_src]->Edata[n].SlopeParFlux / tmp_dist * (snow_pixel[index_SnowStation_dst]->Edata[nn].L / snow_pixel[index_SnowStation_src]->Edata[n].L);
-											// Set the SlopeParFlux to zero, now that we have redistributed it.
-											snow_pixel[index_SnowStation_src]->Edata[n].SlopeParFlux = 0.;
-											break;
-										}
-									}
-								}
+
+					}
+				}
+
+				// Distribute flow to downhill neighbors
+				for (size_t i = 0; i < 8; i++) {
+					if (slopes[i] > 0) {
+						double f = slopes[i] / sum_slope;
+						int nx = ix + neighbors[i].first;
+						int ny = iy + neighbors[i].second;
+						double tmp_dist = (abs(neighbors[i].first) + abs(neighbors[i].second) == 2) ?
+						                  (mio::Cst::Sqrt2 * dem.cellsize) : dem.cellsize;
+						redistributeLateralWaterFlux(nx, ny, coords, snow_pixel, sp, tmp_dist, f);
+					}
+				}
+				for (size_t n = 0; n < sp->getNumberOfElements(); n++) { // Loop over all layers in source cell
+					sp->Edata[n].SlopeParFlux = 0.;
+				}
+			}
+		} catch (const std::exception& e) {
+			++errCount;
+			std::cout << e.what() << std::endl;
+		}
+	}
+
+	if (errCount > 0) {
+		// Something went wrong, quitting
+		std::abort(); // Force core dump
+	}
+
+	return;
+}
+
+
+
+
+/**
+ * @brief Redistributes lateral water flux between snow layers of source and destination cells.
+ *
+ * This function redistributes the lateral water flux from the source cell to the destination cell
+ * based on deposition dates
+ *
+ * @param ixd x index of destination cell
+ * @param iyd y index of destination cell
+ * @param coords vector of cell cordinates
+ * @param snow_pixel vector of snow_pixels
+ * @param sp pointer to the source SnowStation
+ * @param tmp_dist distance between source and destination cells
+ * @param f Proportion of flux to redistribute
+ */
+void SnowpackInterface::redistributeLateralWaterFlux(
+	int ixd, int iyd,
+	const std::vector<std::pair<size_t, size_t>>& coords,
+	const std::vector<SnowStation*>& snow_pixel,
+	SnowStation* sp,
+	double tmp_dist,
+	double f)
+{
+	// Check if destination cell is inside domain
+	if (ixd >= 0 && iyd >= 0 && ixd < int(dimx) && iyd < int(dimy)) {
+		// Find index of destination cell
+		for (size_t i = 0; i < coords.size(); ++i) {
+			if (coords[i] == std::pair<size_t, size_t>{size_t(ixd), size_t(iyd)}) {
+				SnowStation* sp_d = snow_pixel[i];
+				if (sp_d != NULL) { // Make sure destination cell is not a NULL pointer
+					for (size_t n = 0; n < sp->getNumberOfElements(); n++) { // Loop over all layers in source cell
+						for (size_t nn = 0; nn < sp_d->getNumberOfElements(); nn++) { // Loop over all layers in destination cell
+							// Check if deposition date is equal or newer, or if we are at the top layer
+							if (sp_d->Edata[nn].depositionDate >= sp->Edata[n].depositionDate
+							    || nn == sp_d->getNumberOfElements() - 1) {
+								// Redistribute flux
+								sp_d->Edata[nn].lwc_source += f * sp->Edata[n].SlopeParFlux * (sp->Edata[n].L / sp_d->Edata[nn].L) / tmp_dist;
+								sp->Edata[n].lwc_source -= f * sp->Edata[n].SlopeParFlux / tmp_dist;
+								break;
 							}
 						}
 					}
 				}
-				ix++;
+				break;
 			}
-		} catch(const std::exception& e) {
-			++errCount;
-			cout << e.what() << std::endl;
 		}
 	}
-	if (errCount>0) {
-		//something wrong took place, quitting. At least we tried writing the special points out
-		std::abort(); //force core dump
-	}
-	// Send back SnowStations to the workers
-	#pragma omp parallel for schedule(dynamic, 1) reduction(+: errCount)
-	for (size_t ii = 0; ii < workers.size(); ii++) {
-		std::vector<SnowStation*> snow_pixel_out;					// Construct vector to send snow stations to the associated worker
-		for (size_t k = 0; k <  workers[ii]->SnowStationsCoord.size(); k++) {					// Cycle over y
-			const size_t idx = workers[ii]->SnowStationsCoord[k].first + workers[ii]->SnowStationsCoord[k].second * dimx;				// Index of snow pixel
-			snow_pixel_out.push_back(snow_pixel[idx]);
-		}
-		workers[ii]->setLateralFlow(snow_pixel_out);
-	}
-	return;
 }

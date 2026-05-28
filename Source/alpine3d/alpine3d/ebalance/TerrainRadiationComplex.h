@@ -73,7 +73,7 @@ public:
 	virtual void getRadiation(mio::Array2D<double>& direct, mio::Array2D<double>& diffuse,
                             mio::Array2D<double>& terrain, const mio::Array2D<double>& direct_unshaded_horizontal,
                             const mio::Array2D<double>& total_ilwr, mio::Array2D<double>& sky_ilwr,
-                            mio::Array2D<double>& terrain_ilwr, double solarAzimuth, double solarElevation) override;
+                            mio::Array2D<double>& terrain_ilwr, const double& solarAzimuth, const double& solarElevation) override;
 	virtual void setMeteo(const mio::Array2D<double>& albedo, const mio::Array2D<double>& ta) override;
 
 	void getSkyViewFactor(mio::Array2D<double> &o_sky_vf) override;
@@ -100,7 +100,7 @@ private:
 	double computeSkyViewFactor(size_t ii_dem, size_t jj_dem, size_t which_triangle);
 	double getLandViewFactor(size_t ii_dem, size_t jj_dem, size_t which_triangle);
 	double getSkyViewFactor(size_t ii_dem, size_t jj_dem, size_t which_triangle);
-	void getVectorSun(double solarAzimuth, double solarElevation, Vec3D &v_out);
+	void getVectorSun(const double& solarAzimuth, const double& solarElevation, Vec3D &v_out);
 	double TerrainBiggestDifference(const mio::Array3D<double> &terrain_old, const mio::Array3D<double> &terrain_new);
 
 	// Standard Vector operations

@@ -87,7 +87,7 @@ double DailyAverage::getValue(const std::vector<MeteoData>& vecM, const size_t& 
 	return A * sin( 2.*Cst::PI * (frac_day-.25+phase) ) + avg;
 }
 
-void DailyAverage::resample(const std::string& /*stationHash*/, const size_t& index, const ResamplingPosition& /*position*/, const size_t& paramindex,
+bool DailyAverage::resample(const std::string& /*stationHash*/, const size_t& index, const ResamplingPosition& /*position*/, const size_t& paramindex,
                                 const std::vector<MeteoData>& vecM, MeteoData& md)
 {
 	if (index >= vecM.size())
@@ -101,7 +101,7 @@ void DailyAverage::resample(const std::string& /*stationHash*/, const size_t& in
 	const Date dayStart( getDailyStart(md.date) );
 	const double val1 = getValue(vecM, paramindex, index, dayStart, frac_day);
 	if (val1==IOUtils::nodata)
-		return; //we could also decide to use val0 & val2
+		return false; //we could also decide to use val0 & val2
 
 	//get the other values (day before, day after)
 	const double val0 = getValue(vecM, paramindex, index, dayStart-1., frac_day);
@@ -139,6 +139,7 @@ void DailyAverage::resample(const std::string& /*stationHash*/, const size_t& in
 	}
 
 	md.setResampled(true);
+	return true;
 }
 
 } //namespace

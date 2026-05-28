@@ -35,6 +35,7 @@ class SeaIce;	//forward declaration to prevent include loop
 
 #include <string>
 #include <vector>
+#include <functional>
 
 /// @brief The 3 different phases in the matrix
 enum {
@@ -58,7 +59,8 @@ struct WL_STRUCT {
 };
 
 /**
- * @brief ZwischenData contains "memory" information mainly for operational use\n
+ * @brief ZwischenData contains "memory" information mainly for operational outputs.
+ * @details
  * It is used to prepare some parameters of qr_Hdata. This data is read from and written to *.sno
  * or .haz files respectively
  */
@@ -77,7 +79,8 @@ class ZwischenData {
 };
 
 /**
- * @brief CurrentMeteo is the class of interpolated meteo data for the current calculation time step \n
+ * @brief CurrentMeteo is the class of interpolated meteo data for the current calculation time step.
+ * @details
  * It contains some additional and very important derived parameters such as the roughness length or running mean values.
  */
 class CurrentMeteo {
@@ -286,8 +289,9 @@ class SN_SNOWSOIL_DATA {
 };
 
 /**
- * @brief ELEMENT DATA used as a pointer in the SnowStation structure
- * NOTE on M below: this is the mass of an element that is neither changed by phase changes nor densification. \n
+ * @brief The physical properties of an individual element used in snow layers (one or multiple elements are contained in each snow layer).
+ * @details
+ * NOTE on M below: this is the mass of an element that is neither changed by phase changes nor densification. 
  * It is set in the data initialization and used to compute the stress field.
  * It can ONLY be changed by the WATER TRANSPORT or SURFACE SUBLIMATION or WIND TRANSPORT routines.
  */
@@ -452,6 +456,7 @@ class NodeData {
 
 /**
  * @brief Canopy data used as a pointer in the SnowStation structure
+ * @details
  * -# INSTANTANEOUS VARIABLES
  * 	-# Canopy "state" variables, and some auxiliaries
  * 	-# Properties which could be given here or as a parameter field
@@ -624,13 +629,13 @@ class CanopyData {
 		double HMTrunks;     	///< Trunks heat mass (J K-1 /m2 ground surface)
 };
 
-/**
- * @brief Station data including all information on snowpack layers (elements and nodes) and on canopy \n
- * This is the PRIMARY data structure of the SNOWPACK program \n
- * It is used extensively not only during the finite element solution but also to control
- * the post-processing writes. It is initialized from SN_SNOWSOIL_DATA (at present).
- */
 class SeaIce;	// Foreward-declare sea ice class
+/**
+ * @brief Station data including all information on snowpack layers (elements and nodes) and on canopy.
+ * @details This is the PRIMARY data structure of the SNOWPACK program. It is used extensively not only 
+ * during the finite element solution but also to control the post-processing writes. It is initialized 
+ * from SN_SNOWSOIL_DATA.
+ */
 class SnowStation {
 	public:
 		explicit SnowStation(const bool i_useCanopyModel=true, const bool i_useSoilLayers=true,
@@ -654,6 +659,8 @@ class SnowStation {
 		void compSnowpackMasses();
 		void compSnowpackInternalEnergyChange(const double& sn_dt);
 		void compSoilInternalEnergyChange(const double& sn_dt);
+		double averageFromTop(const double& averagingDepth, const std::function<double(const ElementData&)>& Elementproperty);
+		
 		double getLiquidWaterIndex() const;
 		double getModelledTemperature(const double& z) const;
 		double getTotalLateralFlowSnow() const;
@@ -697,7 +704,7 @@ class SnowStation {
 		double hn;                  ///< Depth of new snow to be used on slopes
 		double rho_hn;              ///< Density of new snow to be used on slopes
 #ifndef SNOWPACK_CORE
-		double rime_hn;              ///< rime of new snow to be used on slopes
+		double rime_hn;             ///< rime of new snow to be used on slopes
 #endif
 		double hn_redeposit;        ///< Depth of redeposited snow (REDEPOSIT mode)
 		double rho_hn_redeposit;    ///< Density of redeposited snow (REDEPOSIT mode)
@@ -707,8 +714,8 @@ class SnowStation {
 		double ErosionAge;          ///< Layer age of eroded snow layers
 		double Erosion_ustar_th;    ///< Erosion threshold friction velocity (m/s, property of snowpack)
 #ifndef SNOWPACK_CORE
-		char S_class1;               ///< Stability class based on hand hardness, grain class ...
-		char S_class2;               ///< Stability class based on hand hardness, grain class ...
+		char S_class1;              ///< Stability class based on hand hardness, grain class ...
+		char S_class2;              ///< Stability class based on hand hardness, grain class ...
 		double S_d;                 ///< Minimum deformation rate stability index
 		double z_S_d;               ///< Depth of Minimum S_d
 		double S_n;                 ///< Minimum natural stability index
@@ -769,7 +776,8 @@ class BoundCond {
 };
 
 /**
-* @name Surface data
+* @brief The surface fluxes data as computed by Snowpack
+* @details
 * @note Some of the most important results of the simulation are contained in these data structures
 */
 //@{

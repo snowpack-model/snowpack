@@ -229,9 +229,11 @@ ReSolver1d::ReSolver1d(const SnowpackConfig& cfg, const bool& matrix_part)
 
 
 /**
- * @brief Solving system of equations using Thomas Algorithm \n
- * The following function solves a tridiagonal system of equations using Thomas Algorithm \n
- * @author http://en.wikipedia.org/wiki/Tridiagonal_matrix_algorithm
+ * @brief Solving system of equations using Thomas Algorithm
+ * @details
+ * The following function solves a tridiagonal system of equations using
+ * <a href="http://en.wikipedia.org/wiki/Tridiagonal_matrix_algorithm">Thomas Algorithm</a>.
+ *
  * @param n number of equations
  * @param a sub-diagonal (means it is the diagonal below the main diagonal) -- indexed from 0..n-2
  * @param b the main diagonal
@@ -275,14 +277,17 @@ int ReSolver1d::TDMASolver (size_t n, double *a, double *b, double *c, double *v
 }
 
 /**
- * @brief Solving system of equations using matrix inversion \n
- * The following function solves a tridiagonal system of equations using \n
- * Moore-Penrose matrix inversion, using SVD, giving a pseudo-inverse of a. \n
+ * @brief Solving system of equations using matrix inversion
+ * @details
+ * The following function solves a tridiagonal system of equations using
+ * Moore-Penrose matrix inversion, using SVD, giving a pseudo-inverse of a.
  * @author Nander Wever
+ *
  * @param m number of rows in matrix
  * @param n number of columns in matrix
  * @param lda leading dimension of matrix
  * @param a pointer to top-left corner of matrix to inverse
+ * @return -1 in case of errors, 0 otherwise
  */
 #ifdef CLAPACK
 int ReSolver1d::pinv(int m, int n, int lda, double *a)
@@ -407,7 +412,8 @@ int ReSolver1d::pinv(int /*m*/, int /*n*/, int /*lda*/, double */*a*/) {
 
 
 /**
- * @brief Initializing the finite differences grid for solving Richards Equation \n
+ * @brief Initializing the finite differences grid for solving Richards Equation
+ * @details
  * The function fills vectors z, dz, dz_, dz_up and dz_down.
  * @author Nander Wever
  * @param EMS ElementData structure
@@ -628,6 +634,8 @@ std::vector<double> ReSolver1d::AssembleRHS( const size_t& lowernode,
 					+ Xdata.cos_sl*(k_np1_m_ip12[i]*(z[i]+0.5*(dz_[i]))-k_np1_m_im12[i]*(z[i]-0.5*(dz_[i]))) * (drho_down);
 				break;
 			}
+			default:
+				throw InvalidArgumentException("Please provide a salinity mixing model!", AT);
 		}
 		if(i==uppernode) {
 			Salinity.flux_up[uppernode]+=Salinity.flux_up_2[uppernode];
@@ -652,9 +660,11 @@ std::vector<double> ReSolver1d::AssembleRHS( const size_t& lowernode,
 
 
 /**
- * @brief Solve Richards Equation \n
- * Solve Richards Equation \n
+ * @brief Solve Richards Equation
  * @author Nander Wever
+ * @details Solve <a href="https://en.wikipedia.org/wiki/Richards_equation">Richards Equation</a> for the movement of
+ * water in a porous, unsaturated media.
+ *
  * @param Xdata SnowStation object for which Richards Equation should be solved
  * @param Sdata SurfaceFluxes object to store fluxes
  * @param ql latent heat flux that should be considered as evaporation in the upper boundary condition
@@ -819,17 +829,12 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 	//Initializations for summarizing statistics and some supporting variables, like indices, counters, etc.
 	double accuracy=0.;				//Keeps track of reached accuracy.
 	unsigned int niter=0;				//Counts iterations within one time step of the Richards solver
-	unsigned int niter_snowpack_dt=0;		//Counts iterations within one time step of the SNOWPACK time domain
 	unsigned int niter_nrewinds=0;			//Counts number of rewinds (i.e. a solution was not found and it is tried again with a smaller time step)
 	unsigned int niter_seqrewinds=0;		//Counts number of sequential rewinds. We then decrease the time step more, when we encounter sequential rewinds.
 	unsigned int seq_safemode=0;			//Counts the number of sequential SafeMode actions
 	//Numerical performance statistics
 	double stats_min_dt=MAX_VAL_TIMESTEP;		//Minimum RE time step in SNOWPACK time step, initialized in a way that the comparison will always work.
 	double stats_max_dt=0.;				//Maximum RE time step in SNOWPACK time step, initialized in a way that the comparison will always work.
-	int stats_nrewinds=0;				//Number of rewinds over the SNOWPACK time step.
-	int stats_niters=0;				//Number of iterations over the SNOWPACK time step, excluding the ones before a rewind.
-	int stats_nsteps=0;				//Number of time steps in the RE solver over the SNOWPACK time step.
-	size_t bs_stats_totiter=0;			//Soil freezing/thawing solver: total number of iterations over all layers over the SNOWPACK time step,
 	size_t bs_stats_maxiter=0;			//Soil freezing/thawing solver: maximum number of iterations in a certain layers over the SNOWPACK time step.
 	//Counters, etc.
 	size_t i, j, k;					//Counters for layers
@@ -1197,7 +1202,6 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 
 		while (boolConvergence==false && DoRewindFlag==false) {			//In theory, this can create an endless loop, but for this, I put a throw in the code when no convergence is achieved, because then the situation is hopeless anyway.
 			niter++;
-			niter_snowpack_dt++;
 			memstate++;
 			int solver_result=0;
 
@@ -1489,7 +1493,9 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 								s[i]=tmp;					//Reset source/sink term to original value
 								solver_result=-1;				//Trigger rewind
 							} else {
-								std::cout << "[W] [" << date.toString(mio::Date::ISO) << "] ReSolver1d.cc: for layer " << i << ", prescribed source/sink term could not be applied with dt=" << dt << ". Term reduced from " << tmp << " to " << s[i] << ".\n";
+								std::ostringstream oss;
+								oss << "from " << std::setprecision(8) << std::defaultfloat << tmp << " to " << s[i];
+								std::cout << "[W] [" << date.toString(mio::Date::ISO) << "] ReSolver1d.cc: for layer " << i << "/" << uppernode << ", prescribed source/sink term could not be applied with dt=" << dt << ". Term reduced "<< oss.str() << ".\n";
 							}
 						}
 					}
@@ -1917,7 +1923,6 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 								theta_np1_mp1[i]=EMS[i].VG.fromHtoTHETAforICE(h_np1_mp1[i], 0.);
 							}
 							//Update BS-solver statistics
-							bs_stats_totiter+=BS_iter;
 							if(BS_iter>bs_stats_maxiter) bs_stats_maxiter=BS_iter;
 							if(WriteDebugOutput)
 								std::cout << "AFTER [" << i << std::setprecision(15) << "]: theta_w: " << theta_np1_mp1[i] << " theta_i_np1_m: " << theta_i_np1_mp1[i] << " theta_s:" << EMS[i].VG.theta_s << std::setprecision(3) << "  T: " << EMS[i].Te + delta_Te_adv[i] + delta_Te_adv_i[i] + delta_Te[i] + delta_Te_i[i] << " (niter=" << BS_iter << ")\n" << std::setprecision(6);
@@ -2057,7 +2062,6 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 
 				niter=0;					//Because of the rewind, we start again with the iterations.
 				niter_nrewinds++;				//Increase rewind counter
-				stats_nrewinds++;				//Increase the statistics rewind counter
 				boolConvergence=false;				//Of course, when we need to rewind, we have had no convergence.
 				DoRewindFlag=true;				//Set DoRewindFlag to true, to quit the iteration loop.
 				StopLoop=false;					//In case StopLoop was set true (last time step), we set it back to false. It might be that the smaller time step won't match the SNOWPACK time step any longer.
@@ -2113,7 +2117,6 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 
 					niter=0;
 					niter_nrewinds++;				//Increase rewind counter
-					stats_nrewinds++;				//Increase the statistics rewind counter
 					seq_safemode++;					//Increase counter for sequential safemode
 					boolConvergence=false;				//Of course, when we need to rewind, we have had no convergence.
 					DoRewindFlag=true;				//Set DoRewindFlag to true, to quit the iteration loop.
@@ -2193,8 +2196,6 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 		if(DoRewindFlag==false) {
 			niter_seqrewinds=0;		//We found a good solution (again), so we reset this niter_seqrewind counter.
 			seq_safemode=0;
-			stats_niters+=niter;		//Update the statistics with the number of iterations necessary to find the solution, ignoring possible iterations done before a rewind.
-			stats_nsteps++;			//Update the statistics of the number of steps.
 
 			//Prepare for next time step:
 			if (Xdata.Seaice != NULL) {
@@ -2391,7 +2392,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 			//Update mass balance status variable (mass1 becomes mass2 to serve as reference for the next iteration)
 			mass1=mass2;
 
-			if(WriteDebugOutput) printf("NSTEPS: %d, TIME ADVANCE: %f, ITERS NEEDED: %d [%d], ACTUALTOPFLUX: %.10f     ---> new dt: %.15f\n", nsteps, TimeAdvance, niter, niter_nrewinds, actualtopflux, dt);
+			if(WriteDebugOutput) printf("NSTEPS: %d, TIME ADVANCE: %f, ITERS NEEDED: %ud [%ud], ACTUALTOPFLUX: %.10f     ---> new dt: %.15f\n", nsteps, TimeAdvance, niter, niter_nrewinds, actualtopflux, dt);
 		}	//END DoRewindFlag==false
 	}
 	while(StopLoop==false);							//This is the main loop to perform 1 SNOWPACK time step
