@@ -40,17 +40,20 @@ std::string TEMPLATE::toString() const
 	return ss.str();
 }
 
-void TEMPLATE::resample(const std::string& /*stationHash*/, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
+bool TEMPLATE::resample(const std::string& /*stationHash*/, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
                             const std::vector<MeteoData>& vecM, MeteoData& md)
 {
 	if (index >= vecM.size()) throw IOException("The index of the element to be resampled is out of bounds", AT);
 
 	if (position == ResamplingAlgorithms::exact_match) {
 		const double value = vecM[index](paramindex);
+		md(paramindex) = value;
+		md.setResampled(true);
+		return true; //the point could be filled
 		//implement here how value==nodata should be handled
 	}
 
-	return;
+	return false; //teh point could not be filled by either an exact match or a resampled value
 }
 
 } //namespace

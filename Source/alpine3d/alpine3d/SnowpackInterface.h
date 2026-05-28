@@ -18,7 +18,6 @@
 #ifndef SNOWPACKINTERFACE_H
 #define SNOWPACKINTERFACE_H
 
-#include <iostream>
 #include <meteoio/MeteoIO.h>
 #include <snowpack/libsnowpack.h>
 #include <alpine3d/MeteoObj.h>
@@ -189,6 +188,7 @@ class SnowDriftA3D;
 		                              const std::vector<SurfaceFluxes*>& surface_flux);
 		void write_special_points();
 		void calcLateralFlow();
+		void redistributeLateralWaterFlux(int ixd, int iyd, const std::vector<std::pair<size_t, size_t>>& coords, const std::vector<SnowStation*>& snow_pixel, SnowStation* sp, double tmp_dist, double f);
 		void calcSimpleSnowDrift(const mio::Grid2DObject& ErodedMass, mio::Grid2DObject& psum);
 
 		RunInfo run_info;

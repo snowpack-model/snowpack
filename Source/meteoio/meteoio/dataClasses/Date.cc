@@ -23,6 +23,7 @@
 #include <iostream>
 #include <ctime>
 #include <regex>
+#include <limits>
 
 #include <meteoio/dataClasses/Date.h>
 #include <meteoio/IOUtils.h>
@@ -1488,13 +1489,14 @@ Date DateRange::parseDateHint(const std::string& Date_str, const double tz, cons
  *  * 2024 - 2025 (this means from 2024-01-01 until 2025-12-31 at midnight)
  *  * 2024-10 (this means the whole month of October 2024)
  *  * 2024-10 - 2025 (this means from 2024-10-01 until 2025-12-31)
+ *  * 2024 - ∞ (this means from 2024-01-01 until the maximum representable date)
  * 
  * @param[in] range_spec the range string
  * @param[in] tz timezone of the dates provided in range_spec
  */
 void DateRange::setRange(const std::string& range_spec, const double& tz)
 {
-	static const std::regex ISO_range_regex("^([0-9]{4}(?:\\-[0-1][0-9](?:\\-[0-3][0-9])?)?)(?:\\s+\\-\\s+([0-9]{4}(?:\\-[0-1][0-9](?:\\-[0-3][0-9])?)?)?)?$", std::regex::optimize); //2 capturing group: we either have a single date or a range
+	static const std::regex ISO_range_regex("^([0-9]{4}(?:\\-[0-1][0-9](?:\\-[0-3][0-9])?)?)(?:\\s+\\-\\s+([0-9]{4}(?:\\-[0-1][0-9](?:\\-[0-3][0-9])?)?|∞)?)?$", std::regex::optimize); //2 capturing group: we either have a single date or a range
 	std::smatch match;
 
 	//do we have two dates or only one?
@@ -1503,12 +1505,28 @@ void DateRange::setRange(const std::string& range_spec, const double& tz)
 
 	//since we can not easily count the number of groups that have effectively been captured, we need to check their content
 	if (!match.str(1).empty()) start = parseDateHint(match.str(1), tz, true);
-	if (!match.str(2).empty()) 
-		end = parseDateHint(match.str(2), tz, false);
-	else
+	if (!match.str(2).empty()) {
+		if (match.str(2) == "∞") {
+			end = Date(std::numeric_limits<double>::max(), 0.0);
+		} else {
+			end = parseDateHint(match.str(2), tz, false);
+		}
+	} else
 		end = parseDateHint(match.str(1), tz, false);
 
 	if (!start.isUndef() && !end.isUndef() && start<=end) isValid=true;
+}
+
+const std::string DateRange::toString() const {
+	std::ostringstream os;
+	os << "[" << start.toString(Date::ISO) << " - ";
+	if (end.getJulian() == std::numeric_limits<double>::max()) {
+		os << "∞";
+	} else {
+		os << end.toString(Date::ISO);
+	}
+	os << "]";
+	return os.str();
 }
 
 bool DateRange::hasOverlap(const Date& i_start, const Date& i_end) const 

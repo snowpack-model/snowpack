@@ -21,13 +21,14 @@
 
 #include <meteoio/dataClasses/MeteoData.h>
 #include <meteoio/Config.h>
+#include <meteoio/dataQA.h>
 #include <meteoio/meteoResampling/ResamplingAlgorithms.h>
+#include <meteoio/meteoResampling/ResamplingStack.h>
 #include <meteoio/meteoFilters/ProcessingBlock.h> //for ProcessingProperties
 
 #include <string>
 #include <vector>
 #include <map>
-#include <memory>
 
 namespace mio {
 /**
@@ -73,22 +74,7 @@ namespace mio {
  *
 */
 
-class ResamplingStack {
-    public:
-		ResamplingStack();
 
-        void addAlgorithm(std::shared_ptr<ResamplingAlgorithms> algo, const double& max_gap_size);
-        std::vector<std::shared_ptr<ResamplingAlgorithms>> buildStack(const ResamplingAlgorithms::gap_info& gap) const;
-
-		void resetResampling();
-		void resample(const std::string &stationHash, const size_t &index, const ResamplingAlgorithms::ResamplingPosition elementpos, const size_t &par_idx, const std::vector<MeteoData> &vecM, MeteoData &md, const double& max_gap_size) const;
-		std::string getStackStr() const;
-		bool empty() const;
-
-    private:
-        std::vector<double> max_gap_sizes;
-        std::vector<std::shared_ptr<ResamplingAlgorithms>> stack;
-};
 
 
 /**
@@ -141,18 +127,15 @@ class Meteo1DInterpolator {
 
  	private:
 		std::vector< std::pair<std::string, std::string> > getArgumentsForAlgorithm(const std::string& parname, const std::string& algorithm) const;
-		std::string getAlgorithmsForParameter(const std::string& parname) const;
 
 		void processAlgorithms(const std::string& parname, const std::vector<std::pair<int, std::string>>& vecAlgos, std::string base_parname="", const IOUtils::OperationMode& mode=IOUtils::STD, const char& rank=1);
 		void createResamplingStacks(const IOUtils::OperationMode& mode, const char& rank);
-		// resampling stack helpers
-	    void addAlgorithmToStack(const std::string& parname,const std::string& algo_name ,const std::vector<std::pair<std::string, std::string>>& vecArgs, const double& i_max_gap_size);
-    	void createDefaultAlgorithm(const std::string &parname);
 
 		std::map< std::string, ResamplingStack > mapAlgorithms; //per parameter interpolation algorithms
 		const Config& cfg;
 		double max_gap_size; ///< In seconds
-		bool enable_resampling, data_qa_logs; ///< easy way to turn resampling off
+		bool enable_resampling; ///< easy way to turn resampling off
+		DataQA data_qa; ///< Data quality assurance logging
 		std::string gap_size_key; // To support window size for now; TODO: remove at some point
 
 	public:

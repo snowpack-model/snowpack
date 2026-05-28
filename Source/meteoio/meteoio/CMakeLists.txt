@@ -12,6 +12,45 @@ INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/gridResampling/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/spatialInterpolations/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/dataGenerators/CMakeLists.txt")
 
+###########################################################
+#Set the source files
+SET(meteoio_sources
+	${thirdParty_sources}
+	${dataClasses_sources}
+	${plugins_sources}
+	Timer.cc
+	Config.cc
+	IOExceptions.cc
+	IOUtils.cc
+	FileUtils.cc
+	FStream.cc
+	Graphics.cc
+	GridsManager.cc
+	TimeSeriesManager.cc
+	IOManager.cc
+	DataEditing.cc
+	DataEditingAlgorithms.cc
+	MeteoProcessor.cc
+	GridProcessor.cc
+	Meteo1DInterpolator.cc
+	Meteo2DInterpolator.cc
+	Grid1DInterpolator.cc
+	DataGenerator.cc
+	dataQA.cc
+	plugins/libacdd.cc
+	plugins/libsmet.cc
+	IOInterface.cc
+	${meteoResampling_sources}
+	${gridResampling_sources}
+	${spatialInterpolations_sources}
+	${meteoLaws_sources}
+	${meteoStats_sources}
+	${meteoFilters_sources}
+	${dataGenerators_sources}
+)
+
+###########################################################
+#Additional dependencies and options
 IF(PROJ)
 	FIND_PACKAGE(PROJ)
 	INCLUDE_DIRECTORIES(${PROJ_INCLUDE_DIR})
@@ -26,54 +65,8 @@ IF(PROJ)
 			ADD_DEFINITIONS(-DPROJ4)
 		ENDIF(PROJ4)
 	ENDIF(MSVC)
+	LIST(APPEND EXTRA_LIBS ${PROJ_LIBRARY})
 ENDIF(PROJ)
-
-IF(FORCE_NCML)
-	IF(MSVC)
-		ADD_DEFINITIONS(/DFORCE_NCML) #it looks like some VC++ versions don't support -D syntax
-	ELSE(MSVC)
-		ADD_DEFINITIONS(-DFORCE_NCML)
-	ENDIF(MSVC)
-ENDIF(FORCE_NCML)
-
-SET(meteoio_sources
-	${thirdParty_sources}
-	${dataClasses_sources}
-	Timer.cc
-	Config.cc
-	IOExceptions.cc
-	IOUtils.cc
-	FileUtils.cc
-	FStream.cc
-	Graphics.cc
-	GridsManager.cc
-	TimeSeriesManager.cc
-	IOManager.cc
-	DataEditing.cc
-	DataEditingAlgorithms.cc
-	IOHandler.cc
-	MeteoProcessor.cc
-	GridProcessor.cc
-	Meteo1DInterpolator.cc
-	Meteo2DInterpolator.cc
-	Grid1DInterpolator.cc
-	DataGenerator.cc
-	plugins/libacdd.cc
-	plugins/libsmet.cc
-	IOInterface.cc
-	${meteoResampling_sources}
-	${gridResampling_sources}
-	${spatialInterpolations_sources}
-	${plugins_sources}
-	${meteoLaws_sources}
-	${meteoStats_sources}
-	${meteoFilters_sources}
-	${dataGenerators_sources}
-)
-
-IF(!MSVC)
-	SET_SOURCE_FILES_PROPERTIES(IOUtils.cc PROPERTIES COMPILE_FLAGS -Wno-date-time)
-ENDIF(!MSVC)
 
 IF(GUI_EXCEPTIONS)
 	IF(MSVC)
@@ -85,7 +78,7 @@ IF(GUI_EXCEPTIONS)
 		FIND_PACKAGE(X11)
 		IF(X11_FOUND)
 			INCLUDE_DIRECTORIES(SYSTEM ${X11_INCLUDE_DIR})
-			SET(GUI_LIBS ${X11_LIBRARIES})
+			LIST(APPEND EXTRA_LIBS ${X11_LIBRARIES})
 			LIST(APPEND meteoio_sources MessageBoxX11.cc)
 		ELSE(X11_FOUND)
 			SET(GUI_EXCEPTIONS) #unsets the variable
@@ -93,11 +86,24 @@ IF(GUI_EXCEPTIONS)
 	ENDIF(UNIX AND NOT APPLE AND NOT CYGWIN)
 ENDIF(GUI_EXCEPTIONS)
 
-#shared library.
+IF(FORCE_NCML)
+	IF(MSVC)
+		ADD_DEFINITIONS(/DFORCE_NCML) #it looks like some VC++ versions don't support -D syntax
+	ELSE(MSVC)
+		ADD_DEFINITIONS(-DFORCE_NCML)
+	ENDIF(MSVC)
+ENDIF(FORCE_NCML)
+
+IF(!MSVC)
+	SET_SOURCE_FILES_PROPERTIES(IOUtils.cc PROPERTIES COMPILE_FLAGS -Wno-date-time)
+ENDIF(!MSVC)
+
+###########################################################
+#set compiling targets
 IF(BUILD_SHARED_LIBS)
 	SET(SHAREDNAME ${PROJECT_NAME})
 	ADD_LIBRARY(${SHAREDNAME} ${meteoio_sources})
-	TARGET_LINK_LIBRARIES(${SHAREDNAME} ${plugin_libs} ${PROJ_LIBRARY} ${EXTRA_LINK_FLAGS} ${GUI_LIBS})
+	TARGET_LINK_LIBRARIES(${SHAREDNAME} ${plugin_libs} ${EXTRA_LIBS})
 	SET_TARGET_PROPERTIES(${SHAREDNAME} PROPERTIES
 		MACOSX_RPATH TRUE
 		PREFIX "${LIBPREFIX}"
@@ -109,7 +115,7 @@ IF(BUILD_SHARED_LIBS)
 		SOVERSION "${VERSION_MAJOR}"
 	)
 	INSTALL(TARGETS ${SHAREDNAME}
-		RUNTIME DESTINATION ${LIB_DEST} COMPONENT libraries
+		RUNTIME DESTINATION ${EXE_DEST} COMPONENT libraries
 		LIBRARY DESTINATION ${LIB_DEST} COMPONENT libraries
 		ARCHIVE DESTINATION ${LIB_DEST} COMPONENT libraries
 	)
@@ -120,7 +126,7 @@ IF(BUILD_STATIC_LIBS)
 	SET(STATICNAME ${PROJECT_NAME}_STATIC)
 	SET(STATICLIBNAME ${PROJECT_NAME})
 	ADD_LIBRARY(${STATICNAME} STATIC ${meteoio_sources})
-	TARGET_LINK_LIBRARIES(${STATICNAME} ${plugin_libs} ${PROJ_LIBRARY} ${EXTRA_LINK_FLAGS} ${GUI_LIBS})
+	TARGET_LINK_LIBRARIES(${STATICNAME} ${plugin_libs} ${EXTRA_LIBS})
 	SET_TARGET_PROPERTIES(${STATICNAME} PROPERTIES
 		MACOSX_RPATH TRUE
 		PREFIX "${LIBPREFIX}"
@@ -131,9 +137,8 @@ IF(BUILD_STATIC_LIBS)
 		OUTPUT_NAME ${STATICLIBNAME}
 	)
 	INSTALL(TARGETS ${STATICNAME}
-		RUNTIME DESTINATION ${LIB_DEST} COMPONENT libraries
+		RUNTIME DESTINATION ${EXE_DEST} COMPONENT libraries
 		LIBRARY DESTINATION ${LIB_DEST} COMPONENT libraries
 		ARCHIVE DESTINATION ${LIB_DEST} COMPONENT libraries
 	)
 ENDIF(BUILD_STATIC_LIBS)
-

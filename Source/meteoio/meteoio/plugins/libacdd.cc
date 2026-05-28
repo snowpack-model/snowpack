@@ -36,13 +36,13 @@ using namespace std;
 
 namespace mio {
 
-ACDD::ACDD(const bool& set_enable) 
-     : attributes(), linked_attributes(), dimensions(), variables(), enabled(set_enable), enable_ncml(false)
+ACDD::ACDD(const bool& set_enable)
+     : attributes(), linked_attributes(), dimensions(), variables(), enabled(set_enable), enable_ncml(false), enable_json(false)
 {
 	setEnabled(set_enable);
 }
 
-bool ACDD::isWigosID(const std::string& str) 
+bool ACDD::isWigosID(const std::string& str)
 {
 	// Split the string by '.'
 	std::vector<std::string> parts;
@@ -81,12 +81,12 @@ bool ACDD::isWigosID(const std::string& str)
 std::map<std::string, ACDD::acdd_attrs> ACDD::initAttributes()
 {
 	std::map<std::string, acdd_attrs> tmp;
-	mio::Date now; 
+	mio::Date now;
 	now.setFromSys();
-	
+
 	tmp["date_created"] = ACDD_ATTR("date_created", "", now.toString(mio::Date::ISO_DATE));
 	tmp["institution"] = ACDD_ATTR("institution", "ACDD_INSTITUTION", mio::IOUtils::getDomainName());
-	
+
 	tmp["creator_name"] = ACDD_ATTR("creator_name", "ACDD_CREATOR", mio::IOUtils::getLogName());
 	tmp["creator_email"] = ACDD_ATTR("creator_email", "ACDD_CREATOR_EMAIL");
 	tmp["creator_institution"] = ACDD_ATTR("creator_institution", "ACDD_CREATOR_INSTITUTION", mio::IOUtils::getDomainName());
@@ -98,7 +98,7 @@ std::map<std::string, ACDD::acdd_attrs> ACDD::initAttributes()
 	tmp["publisher_email"] = ACDD_ATTR("publisher_email", "ACDD_PUBLISHER_EMAIL");
 	tmp["publisher_url"] = ACDD_ATTR("publisher_url", "ACDD_PUBLISHER_URL");
 	tmp["publisher_type"] = ACDD_ATTR("publisher_type", "ACDD_PUBLISHER_TYPE");
-	
+
 	tmp["title"] = ACDD_ATTR("title", "ACDD_TITLE");
 	tmp["summary"] = ACDD_ATTR("summary", "ACDD_SUMMARY"); //special handling, see setUserConfig()
 	tmp["comment"] = ACDD_ATTR("comment", "ACDD_COMMENT");
@@ -108,7 +108,7 @@ std::map<std::string, ACDD::acdd_attrs> ACDD::initAttributes()
 	tmp["keywords"] = ACDD_ATTR("keywords", "ACDD_KEYWORDS", "EARTH SCIENCE > CRYOSPHERE,  EARTH SCIENCE > TERRESTRIAL HYDROSPHERE > SURFACE MASS > MASS BALANCE, EARTH SCIENCE > CRYOSPHERE > SNOW/ICE > SNOW ENERGY BALANCE, CLIMATOLOGY/METEOROLOGY/ATMOSPHERE, Land-based Platforms > Permanent Land Sites > WEATHER STATIONS");
 	tmp["project"] = ACDD_ATTR("project", "ACDD_PROJECT");
 	tmp["program"] = ACDD_ATTR("program", "ACDD_PROGRAM");
-	
+
 	tmp["source"] = ACDD_ATTR("source", "ACDD_SOURCE", "MeteoIO-" + mio::getLibVersion(true));
 	tmp["coverage_content_type"] = ACDD_ATTR("coverage_content_type", "ACDD_COVERAGE_CONTENT_TYPE", "physicalMeasurement");
 	tmp["history"] = ACDD_ATTR("history", "", now.toString(mio::Date::ISO_Z) + ", " + mio::IOUtils::getLogName() + "@" + mio::IOUtils::getHostName() + ", MeteoIO-" + mio::getLibVersion(true));
@@ -121,10 +121,10 @@ std::map<std::string, ACDD::acdd_attrs> ACDD::initAttributes()
 	tmp["dataset_production_status"] = ACDD_ATTR("dataset_production_status", "ACDD_DATASET_PRODUCTION_STATUS", "In Work");
 	tmp["activity_type"] = ACDD_ATTR("activity_type", "ACDD_ACTIVITY_TYPE");
 	tmp["operational_status"] = ACDD_ATTR("operational_status", "ACDD_OPERATIONAL_STATUS");
-	
+
 	tmp["wmo__wsi"] = ACDD_ATTR("wmo__wsi", "WIGOS_ID");	//this is not part of acdd
 	tmp["iso_topic_category"] = ACDD_ATTR("iso_topic_category", "ISO_TOPIC_CATEGORY");	//this is not part of acdd
-	
+
 	return tmp;
 }
 
@@ -137,7 +137,7 @@ std::set< std::pair< std::string, std::set<std::string> > > ACDD::initLinks()
 	static const std::set<std::string> creators( {"creator_name", "creator_email", "creator_institution", "creator_url", "creator_type"} );
 	static const std::set<std::string> publishers( {"publisher_name", "publisher_email", "publisher_url", "publisher_type"} );
 	static const std::set<std::string> contributors( {"contributor_name", "contributor_role"} );
-	
+
 	static const std::set< std::pair< std::string, std::set<std::string> > > tmp( {std::make_pair("CREATOR", creators), std::make_pair("PUBLISHER", publishers), std::make_pair("CONTRIBUTOR", contributors)} );
 	return tmp;
 }
@@ -158,7 +158,7 @@ void ACDD::acdd_attrs::readFromFile(std::string& value, const mio::Config& cfg, 
 {
 	const std::string input_file = cfg.get(cfg_key, section, "");
 	std::string buffer;
-	
+
 	if (!input_file.empty()) {
 		std::ifstream fin( input_file.c_str() );
 		if (fin.fail())
@@ -177,7 +177,7 @@ void ACDD::acdd_attrs::readFromFile(std::string& value, const mio::Config& cfg, 
 			if (fin.is_open()) fin.close();
 			throw;
 		}
-		
+
 		value = buffer;
 	}
 }
@@ -199,14 +199,14 @@ void ACDD::acdd_attrs::setUserConfig(const mio::Config& cfg, const std::string& 
 		if (cfg_key=="ACDD_SUMMARY") { //overwrite with the content of summary_file if available
 			readFromFile(value, cfg, "ACDD_SUMMARY_FILE", section, allow_multi_line);
 		}
-		
+
 		//second priority: read from env. var
 		if (value.empty()) {
 			char *tmp = getenv( cfg_key.c_str() );
 			if (tmp!=nullptr) value = std::string(tmp);
 		}
 	}
-	
+
 	//last priority: set from default
 	if (value.empty() && !default_value.empty()) {
 		value = default_value;
@@ -233,7 +233,7 @@ void ACDD::acdd_attrs::setValue(const std::string& i_value, const Mode& mode)
 	} else if (mode==REPLACE) {
 		value = i_value;
 	}
-	
+
 	Default = false;
 }
 
@@ -249,14 +249,14 @@ void ACDD::setUserConfig(const mio::Config& cfg, const std::string& section, con
 	for (auto& acdd_attribute : attributes) {
 		acdd_attribute.second.setUserConfig(cfg, section, allow_multi_line);
 	}
-	
+
 	//HACK handle the special case of wigos_id and metadata_link
 	//Read the WMO extension for Wigos ID and set a default metadata_link to Oscar surface by default if provided
 	const auto search = attributes.find("wmo__wsi");
     if (search != attributes.end() && isWigosID(search->second.getValue())) {
 		addAttribute("metadata_link", "https://oscar.wmo.int/surface/#/search/station/stationReportDetails/"+search->second.getValue(), MERGE);
 	}
-	
+
 	if (attributes.empty()) attributes = initAttributes();
 	if (linked_attributes.empty()) {
 		linked_attributes = initLinks();
@@ -266,7 +266,7 @@ void ACDD::setUserConfig(const mio::Config& cfg, const std::string& section, con
 
 void ACDD::setEnabled(const bool& i_enable)
 {
-	enabled = i_enable; 
+	enabled = i_enable;
 	if (attributes.empty()) attributes = initAttributes();
 	if (linked_attributes.empty()) {
 		linked_attributes = initLinks();
@@ -284,13 +284,13 @@ void ACDD::checkLinkedAttributes()
 {
 	for (const std::pair< std::string, std::set<std::string> >& attr_group : linked_attributes) {
 		std::set< std::string > tweakDefaults;
-		
+
 		//check if all non-default attributes have the same number of sub-elements
 		size_t min_count = IOUtils::npos, max_count = IOUtils::npos;
-		
+
 		for (const auto& attr : attr_group.second) {
 			if (attributes.count(attr)==0) continue;
-			
+
 			const auto& attribute( attributes[attr] );
 			const std::string& value( attribute.getValue() );
 			if (value.empty()) continue;
@@ -298,14 +298,14 @@ void ACDD::checkLinkedAttributes()
 				tweakDefaults.insert( attribute.getName() );
 				continue;
 			}
-			
+
 			const size_t num_elems = countCommas( value ) + 1;
 			if (max_count==IOUtils::npos || num_elems>max_count) max_count = num_elems;
 			if (min_count==IOUtils::npos || num_elems<min_count) min_count = num_elems;
 		}
-		
+
 		if (min_count!=max_count) throw mio::InvalidFormatException("Please configure the same number of fields for each comma-delimited ACDD fields of type '"+attr_group.first+"'", AT);
-		
+
 		//copy more default values if necessary
 		for (const std::string& attr : tweakDefaults) {
 			const std::string& value( attributes[attr].getValue() );
@@ -316,6 +316,17 @@ void ACDD::checkLinkedAttributes()
 	}
 }
 
+void ACDD::setEnableJson(const bool& i_enable)
+{
+#if defined(FORCE_NCML)
+	(void)i_enable;
+	enable_json = true;
+#else
+	enable_json = i_enable;
+#endif
+
+}
+
 void ACDD::setEnableNcML(const bool& i_enable)
 {
 #if defined(FORCE_NCML)
@@ -324,10 +335,10 @@ void ACDD::setEnableNcML(const bool& i_enable)
 #else
 	enable_ncml = i_enable;
 #endif
-	
+
 }
 
-void ACDD::addDimension( const std::string& var_name, const std::string& var_long_name, const size_t& length) 
+void ACDD::addDimension( const std::string& var_name, const std::string& var_long_name, const size_t& length)
 {
 	dimensions.emplace( var_name, var_long_name, length );
 }
@@ -342,15 +353,15 @@ void ACDD::writeNcML(const std::string& data_filename) const
 	const std::string& file_and_path( FileUtils::removeExtension(data_filename) + ".ncml");
 	if (!FileUtils::validFileAndPath(file_and_path)) throw InvalidArgumentException("Invalid file name \""+file_and_path+"\"", AT);
 	errno = 0;
-	
+
 	const ios_base::openmode mode_flags = ios::binary; //read as binary to avoid eol mess
 	mio::ofilestream fout(file_and_path.c_str(), mode_flags);
 	if (fout.fail())
 		throw AccessException("Error opening file \"" + file_and_path + "\" for writing, possible reason: " + std::string(std::strerror(errno)), AT);
-	
+
 	//write the headers
 	fout << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<netcdf xmlns=\"http://www.unidata.ucar.edu/namespaces/netcdf/ncml-2.2\" location=\"" << FileUtils::getFilename( data_filename ) << "\">\n";
-	
+
 	//write the global attributes: <attribute name="title" value="example metadata" />
 	for (auto it = cbegin(); it!=cend(); ++it) {
 		const std::string header_field( it->second.getName() );
@@ -363,7 +374,7 @@ void ACDD::writeNcML(const std::string& data_filename) const
 		fout.setf(flags);
 		fout << "\t<attribute name=\"" << header_field << "\" value=\"" << IOUtils::escapeXml(value) << "\"/>\n";
 	}
-	
+
 	if (!dimensions.empty()) {
 		for (auto dim : dimensions) {
 			fout << "\t<dimension name=\"" << dim.name << "\"";
@@ -371,7 +382,7 @@ void ACDD::writeNcML(const std::string& data_filename) const
 			fout << "/>\n";
 		}
 	}
-	
+
 	if (!variables.empty()) {
 		for (auto var : variables) {
 			fout << "\t<variable name=\"" << var.name << "\" type=\"double\">\n";
@@ -381,9 +392,72 @@ void ACDD::writeNcML(const std::string& data_filename) const
 			fout << "\t</variable>\n";
 		}
 	}
-	
+
 	//close the netcdf namespace
 	fout << "</netcdf>\n";
+	fout.close();
+}
+
+void ACDD::writeJson(const std::string& data_filename) const
+{
+	const std::string& file_and_path(FileUtils::removeExtension(data_filename) + ".json");
+	if (!FileUtils::validFileAndPath(file_and_path))
+		throw InvalidArgumentException("Invalid file name \"" + file_and_path + "\"", AT);
+
+	errno = 0;
+	std::ofstream fout(file_and_path.c_str());
+	if (fout.fail())
+		throw AccessException("Error opening file \"" + file_and_path + "\" for writing, possible reason: " + std::string(std::strerror(errno)), AT);
+
+	// Start JSON object
+	fout << "{\n";
+	fout << "\t\"netcdf\": {\n";
+	fout << "\t\t\"location\": \"" << FileUtils::getFilename(data_filename) << "\",\n";
+
+	// Write global attributes
+	fout << "\t\t\"attributes\": {\n";
+	bool first_attr = true;
+	for (auto it = cbegin(); it != cend(); ++it) {
+		const std::string header_field(it->second.getName());
+		const std::string value(it->second.getValue());
+		if (header_field.empty() || value.empty()) continue;
+	
+		if (!first_attr) fout << ",\n";
+		fout << "\t\t\t\"" << header_field << "\": \"" << IOUtils::escapeJson(value) << "\"";
+		first_attr = false;
+	}
+	fout << "\n\t\t}";
+
+	// Write dimensions
+	if (!dimensions.empty()) {
+		fout << ",\n\t\t\"dimensions\": [\n";
+		bool first_dim = true;
+		for (auto dim : dimensions) {
+			if (!first_dim) fout << ",\n";
+			fout << "\t\t\t{\n";
+			fout << "\t\t\t\t\"name\": \"" << dim.name << "\",\n";
+			fout << "\t\t\t\t\"length\": " << dim.length;
+			fout << "\n\t\t\t}";
+			first_dim = false;
+		}
+		fout << "\n\t\t]";
+	}
+
+	// Write variables
+	if (!variables.empty()) {
+		fout << ",\n\t\t\"variables\": [\n";
+		bool first_var = true;
+		for (auto var : variables) {
+			if (!first_var) fout << ",\n";
+			fout << "\t\t\t{ \"name\": \"" << var.name << "\" }";
+			first_var = false;
+		}
+		fout << "\n\t\t]";
+	}
+
+	// Close JSON object
+	fout << "\n\t}\n";
+	fout << "}\n";
 	fout.close();
 }
 
@@ -450,7 +524,7 @@ void ACDD::setGeometry(const mio::Grid2DObject& grid, const bool& isLatLon)
 {
 	mio::Coords urcorner(grid.llcorner);
 	urcorner.moveByXY(static_cast<double>(grid.getNx())*grid.cellsize, static_cast<double>(grid.getNy())*grid.cellsize);
-	
+
 	std::string epsg_str = "4326";
 	std::string geometry;
 	if (isLatLon) {
@@ -464,7 +538,7 @@ void ACDD::setGeometry(const mio::Grid2DObject& grid, const bool& isLatLon)
 		std::ostringstream os;
 		os << grid.llcorner.getEPSG();
 		epsg_str = os.str();
-		
+
 		std::ostringstream ss;
 		ss << std::fixed << std::setprecision(10) << grid.llcorner.getEasting() << " " << grid.llcorner.getNorthing() << ", ";
 		ss << urcorner.getEasting() << " " << grid.llcorner.getNorthing() << ", ";
@@ -472,7 +546,7 @@ void ACDD::setGeometry(const mio::Grid2DObject& grid, const bool& isLatLon)
 		ss << grid.llcorner.getEasting() << " " << urcorner.getNorthing();
 		geometry = ss.str();
 	}
-	
+
 	addAttribute("geospatial_bounds_crs", "EPSG:"+epsg_str, REPLACE);
 	addAttribute("geospatial_bounds", "Polygon (("+geometry+"))", REPLACE);
 
@@ -494,7 +568,7 @@ void ACDD::setGeometry(const mio::Grid2DObject& grid, const bool& isLatLon)
 void ACDD::setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMeteo, const bool& isLatLon)
 {
 	if (vecMeteo.empty()) return;
-	
+
 	std::string multiPts;
 	short int epsg = -1;
 	double lat_min=90., lat_max=-90., lon_min=360., lon_max=-360.;
@@ -522,7 +596,7 @@ void ACDD::setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMete
 		const double curr_lon = timeseries.front().meta.position.getLon();
 		const double curr_alt = timeseries.front().meta.position.getAltitude();
 		found = true;
-		
+
 		if (lat_min>curr_lat) lat_min = curr_lat;
 		if (lat_max<curr_lat) lat_max = curr_lat;
 		if (lon_min>curr_lon) lon_min = curr_lon;
@@ -531,7 +605,7 @@ void ACDD::setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMete
 		if (alt_max<curr_alt) alt_max = curr_alt;
 	}
 	if (!found) return;
-	
+
 	if (epsg>0) { //ie there is at least one valid point and all further points use the same epsg
 		std::ostringstream os;
 		os << epsg;
@@ -558,12 +632,12 @@ void ACDD::setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMete
 void ACDD::setGeometry(const std::set< mio::Coords >& vecLocation, const bool& isLatLon)
 {
 	if (vecLocation.empty()) return;
-	
+
 	std::string multiPts;
 	short int epsg = -1;
 	double lat_min=90., lat_max=-90., lon_min=360., lon_max=-360.;
 	double alt_min=std::numeric_limits<double>::max(), alt_max=-std::numeric_limits<double>::max();
-	
+
 	for (const mio::Coords& location : vecLocation) {
 		//create the strings for the MultiPoint property
 		std::ostringstream ss;
@@ -583,7 +657,7 @@ void ACDD::setGeometry(const std::set< mio::Coords >& vecLocation, const bool& i
 		const double curr_lat = location.getLat();
 		const double curr_lon = location.getLon();
 		const double curr_alt = location.getAltitude();
-		
+
 		if (curr_lat<lat_min) lat_min = curr_lat;
 		if (curr_lat>lat_max) lat_max = curr_lat;
 		if (curr_lon<lon_min) lon_min = curr_lon;
@@ -591,24 +665,24 @@ void ACDD::setGeometry(const std::set< mio::Coords >& vecLocation, const bool& i
 		if (curr_alt<alt_min) alt_min = curr_alt;
 		if (curr_alt>alt_max) alt_max = curr_alt;
 	}
-	
+
 	if (epsg>0) { //ie there is at least one valid point and all further points use the same epsg
 		std::ostringstream os;
 		os << epsg;
 		addAttribute("geospatial_bounds_crs", "EPSG:"+os.str(), REPLACE);
-		
+
 		const bool singlePoint = (lat_min==lat_max && lon_min==lon_max);
 		if (singlePoint)
 			addAttribute("geospatial_bounds", "POINT Z "+multiPts+"", REPLACE);
 		else
 			addAttribute("geospatial_bounds", "MULTIPOINT Z ("+multiPts+")", REPLACE);
 	}
-	
+
 	addAttribute("geospatial_lat_min", lat_min, REPLACE);
 	addAttribute("geospatial_lat_max", lat_max, REPLACE);
 	addAttribute("geospatial_lon_min", lon_min, REPLACE);
 	addAttribute("geospatial_lon_max", lon_max, REPLACE);
-	
+
 	addAttribute("geospatial_vertical_positive", "up", REPLACE);
 	addAttribute("geospatial_vertical_units", "m", REPLACE);
 	if (alt_min!=IOUtils::nodata) {
@@ -642,7 +716,7 @@ void ACDD::setGeometry(const mio::Coords& location, const bool& isLatLon)
 	addAttribute("geospatial_lat_max", location.getLat(), REPLACE);
 	addAttribute("geospatial_lon_min", location.getLon(), REPLACE);
 	addAttribute("geospatial_lon_max", location.getLon(), REPLACE);
-	
+
 	addAttribute("geospatial_vertical_positive", "up", REPLACE);
 	addAttribute("geospatial_vertical_units", "m", REPLACE);
 	if (location.getAltitude()!=IOUtils::nodata) {
@@ -657,7 +731,7 @@ void ACDD::setGeometry(const mio::Coords& location, const bool& isLatLon)
 void ACDD::setTimeCoverage(const std::vector< std::vector<mio::MeteoData> >& vecMeteo)
 {
 	if (vecMeteo.empty()) return;
-	
+
 	mio::Date set_start( vecMeteo[0].front().date );
 	mio::Date set_end( vecMeteo[0].back().date );
 	int sampling_period = -1;
@@ -667,7 +741,7 @@ void ACDD::setTimeCoverage(const std::vector< std::vector<mio::MeteoData> >& vec
 		const mio::Date curr_end( timeseries.back().date );
 		if (set_start>curr_start) set_start = curr_start;
 		if (set_end<curr_end) set_end = curr_end;
-		
+
 		const size_t npts = timeseries.size();
 		if (npts>1) {
 			const int curr_sampling = static_cast<int>( (curr_end.getJulian() - curr_start.getJulian()) / static_cast<double>(npts-1) * 24.*3600. + .5);
@@ -677,7 +751,7 @@ void ACDD::setTimeCoverage(const std::vector< std::vector<mio::MeteoData> >& vec
 	addAttribute( "time_coverage_start", set_start.toString(mio::Date::ISO_TZ), REPLACE);
 	addAttribute( "time_coverage_end", set_end.toString(mio::Date::ISO_TZ), REPLACE);
 	addAttribute( "time_coverage_duration", Date::printISODuration(set_end, set_start), REPLACE);
-	
+
 	if (sampling_period>0) {
 		std::ostringstream os;
 		os << "P" << sampling_period << "S"; //ISO8601 duration format
@@ -690,13 +764,13 @@ void ACDD::setTimeCoverage(const std::vector< std::vector<mio::MeteoData> >& vec
 void ACDD::setTimeCoverage(const std::vector<mio::MeteoData>& vecMeteo)
 {
 	if (vecMeteo.empty()) return;
-	
+
 	const mio::Date set_start( vecMeteo.front().date );
 	const mio::Date set_end( vecMeteo.back().date );
 	addAttribute( "time_coverage_start", set_start.toString(mio::Date::ISO_TZ), REPLACE);
 	addAttribute( "time_coverage_end", set_end.toString(mio::Date::ISO_TZ), REPLACE);
 	addAttribute( "time_coverage_duration", Date::printISODuration(set_end, set_start), REPLACE);
-	
+
 	const size_t npts = vecMeteo.size();
 	if (npts>1) {
 		const int sampling_period = static_cast<int>( (set_end.getJulian() - set_start.getJulian()) / static_cast<double>(npts-1) * 24.*3600. + .5);
@@ -711,14 +785,14 @@ void ACDD::setTimeCoverage(const std::vector<mio::MeteoData>& vecMeteo)
 void ACDD::setTimeCoverage(const std::vector<std::string>& vec_timestamp, const double& TZ)
 {
 	if (vec_timestamp.empty()) return;
-	
+
 	mio::Date set_start, set_end;
 	mio::IOUtils::convertString(set_start, vec_timestamp.front(), TZ);
 	mio::IOUtils::convertString(set_end, vec_timestamp.back(), TZ);
 	addAttribute( "time_coverage_start", set_start.toString(mio::Date::ISO_TZ), REPLACE);
 	addAttribute( "time_coverage_end", set_end.toString(mio::Date::ISO_TZ), REPLACE);
 	addAttribute( "time_coverage_duration", Date::printISODuration(set_end, set_start), REPLACE);
-	
+
 	const size_t npts = vec_timestamp.size();
 	if (npts>1) {
 		const int sampling_period = static_cast<int>( (set_end.getJulian() - set_start.getJulian()) / static_cast<double>(npts-1) * 24.*3600. + .5);

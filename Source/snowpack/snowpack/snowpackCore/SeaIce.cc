@@ -473,21 +473,22 @@ double SeaIce::calculateBrineSalinity(const double& T)
 		const double tc = IOUtils::K_TO_C(T);
 		return tc/-SeaIce::mu;
 	} else if (thermalmodel == VANCOPPENOLLE2019) {
-		// See Eq. 10 in: Vancoppenolle, M., Madec, G., Thomas, M., & McDougall, T. J. (2019). Thermodynamics of sea ice phase composition revisited. Journal of Geophysical Research: Oceans, 124, 615–634. doi: 10.1029/2018JC014611 
-		const double a1 = -0.00535;
-		const double a2 = -0.519;
-		const double a3 = -18.7;
+		// See Eq. 10 in: Vancoppenolle, M., Madec, G., Thomas, M., & McDougall, T. J. (2019). Thermodynamics of sea ice phase composition revisited. Journal of Geophysical Research: Oceans, 124, 615–634. doi: 10.1029/2018JC014611
+		static const double a1 = -0.00535;
+		static const double a2 = -0.519;
+		static const double a3 = -18.7;
 		const double tc = IOUtils::K_TO_C(T);
 		return std::min(300., a1*tc*tc*tc + a2*tc*tc + a3*tc);
 	} else if (thermalmodel == VANCOPPENOLLE2019_M) {
 		// A quadratic fit to Eq. 10 in Vancoppenolle et al. (2019)
-		const double a1 = -0.16055612425953938;
-		const double a2 = -13.296596377964793;
+		static const double a1 = -0.16055612425953938;
+		static const double a2 = -13.296596377964793;
 		const double tc = IOUtils::K_TO_C(T);
 		return std::min(270., a1 * tc * tc + a2 * tc);
 	} else {
-		throw; return IOUtils::nodata;
+		throw;
 	}
+	 return IOUtils::nodata;
 }
 
 
@@ -504,21 +505,21 @@ double SeaIce::calculateMeltingTemperature(const double& Sal)
 	} else if (thermalmodel == ASSUR1958) {
 		return IOUtils::C_TO_K(-SeaIce::mu * Sal);
 	} else if (thermalmodel == VANCOPPENOLLE2019) {
-		const double a1 = -0.00535;
-		const double a2 = -0.519;
-		const double a3 = -18.7;
+		static const double a1 = -0.00535;
+		static const double a2 = -0.519;
+		static const double a3 = -18.7;
 
 		// Normalize the cubic equation:
-		double p = a2 / a1;
-		double q = a3 / a1;
+		static const double p = a2 / a1;
+		static const double q = a3 / a1;
 		double r = -((Sal > 300.)?(300.):(Sal)) / a1;
 
 		// Calculate the depressed cubic:
-		double a = q - (p * p / 3.0);
-		double b = 2.0 * p * p * p / 27.0 - (p * q / 3.) + r;
+		static const double a = q - (p * p / 3.0);
+		const double b = 2.0 * p * p * p / 27.0 - (p * q / 3.) + r;
 
 		// Calculate discriminant
-		double disc = (b / 2.) * (b / 2.) + (a / 3.) * (a / 3.) * (a / 3.);
+		static const double disc = (b / 2.) * (b / 2.) + (a / 3.) * (a / 3.) * (a / 3.);
 
 		double rt1 = 0.;
 		if (disc > 0.) {
@@ -533,13 +534,14 @@ double SeaIce::calculateMeltingTemperature(const double& Sal)
 			throw;
 		}
 	} else if (thermalmodel == VANCOPPENOLLE2019_M) {
-		const double a1 = -0.16055612425953938;
-		const double a2 = -13.296596377964793;
+		static const double a1 = -0.16055612425953938;
+		static const double a2 = -13.296596377964793;
 		const double t = -((sqrt(4.*a1*std::min(270.,Sal)+a2*a2)+a2)/a1)/2.;
 		return IOUtils::C_TO_K(t);
 	} else {
-		throw; return IOUtils::nodata;
+		throw;
 	}
+	return IOUtils::nodata;
 }
 
 
@@ -561,8 +563,8 @@ std::pair<double, double> SeaIce::getMu(const double& Sal)
 		// Numerical differentiation:
 		mu1 = (this->calculateMeltingTemperature(Sal + Constants::eps) - this->calculateMeltingTemperature(Sal - Constants::eps)) / (2. * Constants::eps);
 	} else if (thermalmodel == VANCOPPENOLLE2019_M) {
-		const double a1 = -0.16055612425953938;
-		const double a2 = -13.296596377964793;
+		static const double a1 = -0.16055612425953938;
+		static const double a2 = -13.296596377964793;
 		mu1 = (-1./sqrt(4.*a1*std::min(270.,Sal)+a2*a2));
 	}
 	mu0 = this->calculateMeltingTemperature(Sal) - mu1 * Sal;
@@ -597,8 +599,8 @@ double SeaIce::compSeaIceThermalConductivity(const ElementData& Edata)
 {
 	// From: Bitz, C. M., and W. H. Lipscomb (1999), An energy-conserving thermodynamic model of sea ice, J. Geophys. Res., 104(C7), 15669–15677, doi:10.1029/1999JC900100.
 	// See Eq. 9
-	const double beta =  0.1172;		// W/m^2/permille
-	const double k0 = 2.034;		// W/m/K, note that this is the thermal conductivity of fresh ice, and it may be coupled to the value in Constants.h
+	static const double beta =  0.1172;		// W/m^2/permille
+	static const double k0 = 2.034;		// W/m/K, note that this is the thermal conductivity of fresh ice, and it may be coupled to the value in Constants.h
 	// Note the conversion from kg/kg to permille for salinity
 	return (k0 + ((beta * Edata.salinity) / Edata.Te));
 }
@@ -615,7 +617,7 @@ double SeaIce::compSeaIceLatentHeatFusion(const double& T, const double& Sal)
 {
 	// From: Bitz, C. M., and W. H. Lipscomb (1999), An energy-conserving thermodynamic model of sea ice, J. Geophys. Res., 104(C7), 15669–15677, doi:10.1029/1999JC900100.
 	// See Eq. 5
-	const double L0 = Constants::lh_fusion;
+	static const double L0 = Constants::lh_fusion;
 	return L0 * (1. + (SeaIce::mu * Sal) / T);
 }
 
@@ -630,8 +632,8 @@ double SeaIce::compSeaIceLatentHeatFusion(const ElementData& Edata)
 {
 	// From: Bitz, C. M., and W. H. Lipscomb (1999), An energy-conserving thermodynamic model of sea ice, J. Geophys. Res., 104(C7), 15669–15677, doi:10.1029/1999JC900100.
 	// See Eq. 5
-	const double L0 = Constants::lh_fusion;
-	const double c0 = Constants::specific_heat_ice;
+	static const double L0 = Constants::lh_fusion;
+	static const double c0 = Constants::specific_heat_ice;
 	return c0 * (Edata.meltfreeze_tk - Edata.Te) + L0 * (1. + (SeaIce::mu * Edata.salinity) / Edata.Te);
 }
 

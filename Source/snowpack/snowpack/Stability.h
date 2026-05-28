@@ -34,8 +34,8 @@ typedef bool (*StabFnShearStrength)(const double&, const double&, const mio::Dat
 
 /**
  * @class Stability
- * @brief This class contains the stability routines for the snowpack model.
- * Stability is found for each LAYER (i.e. finite element) and INTERFACE (i.e. node).
+ * @brief This class contains the snow stability routines for the snowpack model.
+ * @details Stability is found for each LAYER (i.e. finite element) and INTERFACE (i.e. node).
  * Subsequently, the element data contains a variable S_dr (layer stability for
  * direct action avalanches) and the nodal data contains the varialble S_i
  * (interface stability). The station data contain S_class an overall stability
@@ -43,7 +43,6 @@ typedef bool (*StabFnShearStrength)(const double&, const double&, const mio::Dat
  * characterization.  At the end, the stability index approach is compared to this
  * profile characterization to check consistency/reliability. 
  * 
- * TODO: update description 2009-10-20
  * @ingroup postprocessing
  */
 class Stability {

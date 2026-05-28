@@ -24,6 +24,7 @@
 
 #include <mysql.h>
 #include <stdio.h>
+#include <cstring>
 
 #include <algorithm>
 
@@ -56,10 +57,11 @@ namespace mio {
 */
 
 const double SASEIO::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
-const string SASEIO::MySQLQueryStationMetaData = "SELECT StationName, Latitude, Longitude, Altitude FROM metadata WHERE StationID='STATION_NAME' AND StationIDInt='STATION_NUMBER'"; ///< Snow station meta data
-const string SASEIO::MySQLQueryMeteoData = "SELECT TimeStamp, TA, RH, VW, HS, TSS, OSWR, ISWR, ILWR, HNW, P FROM station_meteoio_data_aws WHERE StationID='STATION_NUMBER' AND StationName='STATION_NAME' AND TimeStamp>='START_DATE' AND TimeStamp<='END_DATE' ORDER BY TimeStamp ASC"; ///< METEO Data query using MYSQL Timestamp
+// SQL queries use ? placeholders for parameterized queries
+const string SASEIO::MySQLQueryStationMetaData = "SELECT StationName, Latitude, Longitude, Altitude FROM metadata WHERE StationID=? AND StationIDInt=?"; ///< Snow station meta data
+const string SASEIO::MySQLQueryMeteoData = "SELECT TimeStamp, TA, RH, VW, HS, TSS, OSWR, ISWR, ILWR, HNW, P FROM station_meteoio_data_aws WHERE StationID=? AND StationName=? AND TimeStamp>=? AND TimeStamp<=? ORDER BY TimeStamp ASC"; ///< METEO Data query using MYSQL Timestamp
 
-//const string SASEIO::MySQLQueryMeteoData = "SELECT timestamp, TA, RH, VW, HS, TSS, OSWR FROM data WHERE StationID='STATION_NUMBER' AND timestamp>='START_DATE' AND timestamp<='END_DATE' ORDER BY timestamp ASC"; ///< METEO Data query Using SNPK Timestamp
+//const string SASEIO::MySQLQueryMeteoData = "SELECT timestamp, TA, RH, VW, HS, TSS, OSWR FROM data WHERE StationID=? AND timestamp>=? AND timestamp<=? ORDER BY timestamp ASC"; ///< METEO Data query Using SNPK Timestamp
 
 SASEIO::SASEIO(const std::string& configfile)
         : cfg(configfile), vecStationIDs(), vecStationMetaData(),
@@ -146,16 +148,53 @@ void SASEIO::getStationMetaData(const std::string& stat_abk, const std::string& 
 		throw IOException("Could not initiate connection to Mysql server "+mysqlhost, AT);
 	}
 
-	std::string Query1( sqlQuery );
-	const std::string str1( "STATION_NAME" );
-	const std::string str2( "STATION_NUMBER" );
-	Query1.replace(Query1.find(str1), str1.length(), stat_abk);// set 1st variable's value
-	Query1.replace(Query1.find(str2), str2.length(), stao_nr);// set 2nd variable's value
-	if (mysql_query(conn, Query1.c_str())) {
-		throw IOException("Query1 \""+Query1+"\" failed to execute", AT);
+	// Use prepared statement
+	MYSQL_STMT *stmt = mysql_stmt_init(conn);
+	if (!stmt) {
+		mysql_close(conn);
+		throw IOException("Failed to initialize MySQL statement", AT);
 	}
 
-	MYSQL_RES *res = mysql_use_result(conn);
+	if (mysql_stmt_prepare(stmt, sqlQuery.c_str(), sqlQuery.length())) {
+		mysql_stmt_close(stmt);
+		mysql_close(conn);
+		throw IOException("Failed to prepare SQL statement: " + std::string(mysql_stmt_error(stmt)), AT);
+	}
+
+	// Bind parameters
+	MYSQL_BIND bind[2];
+	memset(bind, 0, sizeof(bind));
+
+	bind[0].buffer_type = MYSQL_TYPE_STRING;
+	bind[0].buffer = (char *)stat_abk.c_str();
+	bind[0].buffer_length = stat_abk.length();
+
+	bind[1].buffer_type = MYSQL_TYPE_STRING;
+	bind[1].buffer = (char *)stao_nr.c_str();
+	bind[1].buffer_length = stao_nr.length();
+
+	if (mysql_stmt_bind_param(stmt, bind)) {
+		mysql_stmt_close(stmt);
+		mysql_close(conn);
+		throw IOException("Failed to bind parameters", AT);
+	}
+
+	if (mysql_stmt_execute(stmt)) {
+		mysql_stmt_close(stmt);
+		mysql_close(conn);
+		throw IOException("Query execution failed: " + std::string(mysql_stmt_error(stmt)), AT);
+	}
+
+	MYSQL_RES *res = mysql_stmt_result_metadata(stmt);
+	if (!res) {
+		mysql_stmt_close(stmt);
+		mysql_close(conn);
+		throw IOException("No result set returned", AT);
+	}
+
+	mysql_stmt_store_result(stmt);
+
+	const unsigned int column_no = mysql_num_fields(res);
 	const unsigned int column_no = mysql_num_fields(res);
 	std::string tmp_str;
 	MYSQL_ROW row;
@@ -166,6 +205,7 @@ void SASEIO::getStationMetaData(const std::string& stat_abk, const std::string& 
 		}
 	}
 	mysql_free_result(res);
+	mysql_stmt_close(stmt);
 	mysql_close(conn);
 
 	const size_t nr_metadata = vecMetaData.size();
@@ -298,29 +338,67 @@ bool SASEIO::getStationData(const std::string& stat_abk, const std::string& stao
 	std::string eDate( dateE.toString(Date::ISO) );
 	std::replace( eDate.begin(), eDate.end(), 'T', ' ');
 
-	std::string Query2( MySQLQueryMeteoData );
-	const std::string str1( "STATION_NAME" );
-	const std::string str2( "STATION_NUMBER" );
-	const std::string str3( "START_DATE" );
-	const std::string str4( "END_DATE" );
-	Query2.replace( Query2.find(str1), str1.length(), stat_abk ); // set 1st variable's value
-	Query2.replace( Query2.find(str2), str2.length(), stao_nr ); // set 2nd variable's value
-	Query2.replace( Query2.find(str3), str3.length(), sDate ); // set 3rd variable's value
-	Query2.replace( Query2.find(str4), str4.length(), eDate ); // set 4th variable's value
-
+	// Use prepared statement
 	MYSQL *conn2 = mysql_init(nullptr);
 	if (!mysql_real_connect(conn2, mysqlhost.c_str(), mysqluser.c_str(), mysqlpass.c_str(), mysqldb.c_str(), 0, nullptr, 0)) {
 		throw IOException("Could not initiate connection to Mysql server "+mysqlhost, AT);
 	}
 
-	if (mysql_query(conn2, Query2.c_str())) {
-		throw IOException("Query2 \""+Query2+"\" failed to execute", AT);
+	MYSQL_STMT *stmt = mysql_stmt_init(conn2);
+	if (!stmt) {
+		mysql_close(conn2);
+		throw IOException("Failed to initialize MySQL statement", AT);
 	}
 
-	MYSQL_RES *res2 = mysql_use_result(conn2);
+	if (mysql_stmt_prepare(stmt, MySQLQueryMeteoData.c_str(), MySQLQueryMeteoData.length())) {
+		mysql_stmt_close(stmt);
+		mysql_close(conn2);
+		throw IOException("Failed to prepare SQL statement: " + std::string(mysql_stmt_error(stmt)), AT);
+	}
+
+	// Bind parameters
+	MYSQL_BIND bind[4];
+	memset(bind, 0, sizeof(bind));
+
+	bind[0].buffer_type = MYSQL_TYPE_STRING;
+	bind[0].buffer = (char *)stao_nr.c_str();
+	bind[0].buffer_length = stao_nr.length();
+
+	bind[1].buffer_type = MYSQL_TYPE_STRING;
+	bind[1].buffer = (char *)stat_abk.c_str();
+	bind[1].buffer_length = stat_abk.length();
+
+	bind[2].buffer_type = MYSQL_TYPE_STRING;
+	bind[2].buffer = (char *)sDate.c_str();
+	bind[2].buffer_length = sDate.length();
+
+	bind[3].buffer_type = MYSQL_TYPE_STRING;
+	bind[3].buffer = (char *)eDate.c_str();
+	bind[3].buffer_length = eDate.length();
+
+	if (mysql_stmt_bind_param(stmt, bind)) {
+		mysql_stmt_close(stmt);
+		mysql_close(conn2);
+		throw IOException("Failed to bind parameters", AT);
+	}
+
+	if (mysql_stmt_execute(stmt)) {
+		mysql_stmt_close(stmt);
+		mysql_close(conn2);
+		throw IOException("Query execution failed: " + std::string(mysql_stmt_error(stmt)), AT);
+	}
+
+	MYSQL_RES *res2 = mysql_stmt_result_metadata(stmt);
+	if (!res2) {
+		mysql_stmt_close(stmt);
+		mysql_close(conn2);
+		throw IOException("No result set returned", AT);
+	}
+
+	mysql_stmt_store_result(stmt);
+
 	const unsigned int column_no2 = mysql_num_fields(res2);
-	MYSQL_ROW row2;
-	while ( ( row2= mysql_fetch_row(res2) ) != nullptr ) {
+	while ( ( row2 = mysql_fetch_row(res2) ) != nullptr ) {
 		std::vector<std::string> vecData;
 		for (unsigned int ii=0; ii<column_no2; ii++) {
 			std::string row_02;
@@ -340,6 +418,7 @@ bool SASEIO::getStationData(const std::string& stat_abk, const std::string& stao
 	}
 
 	mysql_free_result(res2);
+	mysql_stmt_close(stmt);
 	mysql_close(conn2);
 	return fullStation;
 }

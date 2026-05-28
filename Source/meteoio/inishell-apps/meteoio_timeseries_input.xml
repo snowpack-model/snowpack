@@ -245,9 +245,9 @@ Please include meteoio_parametergroups before use!
 			<option value="FALSE"/>
 			<help>If set to true, fields that can not be parsed are assigned &lt;code&gt;nodata&lt;/code&gt;</help>
 		</parameter>
-		
+
 		<parameter type="spacer" height="15"/>
-		
+
 		<parameter key="METEOFILE#" type="grid" replicate="true"> <!-- a grid without raster positions aligns vertically -->
 			<option>
 				<parameter key="METEOFILE#" type="filename" path="%INPUT::METEOPATH" mode="input" optional="false">
@@ -261,12 +261,12 @@ Please include meteoio_parametergroups before use!
 			</option>
 			<help>Enter file name and position for meteofile number #</help>
 		</parameter>
-		
+
 		<parameter type="spacer" height="15"/>
 		<parameter type="helptext" wrap="true">
 			<help>The settings below apply to all meteofiles, except when overwritten by meteofile specific settings (as set within each METEOFILE# input)</help>
 		</parameter>
-		
+
 		<frame caption="Metadata" color="#c4c4c4" collapsed="true">
 			<parameter key="CSV_NAME" type="text">
 				<help>A descriptive station name to use (if provided, has priority over the special headers). Example: "Davos::SLF-station"</help>
@@ -290,7 +290,7 @@ Please include meteoio_parametergroups before use!
 				<help>Pattern to parse the filename and extract metadata out of it, such as &lt;code&gt;{ID}_{NAME}-{SKIP}_-_{PARAM}&lt;/code&gt;</help>
 			</parameter>
 		</frame>
-		
+
 		<frame caption="Header handling" color="#c4c4c4" collapsed="true">
 			<parameter key="CSV_NR_HEADERS" type="number" format="integer+" default="1" notoggle="true">
 				<help>Number of header lines</help>
@@ -321,7 +321,7 @@ Please include meteoio_parametergroups before use!
 				<help>Factor to multiply each value by (including the timestamp), in order to convert it to SI derived units, such as &lt;code&gt;1 1 0.01&lt;/code&gt;. This can also be applied after automatic units conversion (see above) as a way to apply yet another multiplier.</help>
 			</parameter>
 		</frame>
-		
+
 		<frame caption="Data parsing restrictions" color="#c4c4c4" collapsed="true">
 			<parameter key="CSV_COMMENTS_MK" type="text" validate="^.$">
 				<help>Single character to use as marker for comments in the input file (default: none). The line is still considered as part of the file, i.e. has to be counted as part of a header.</help>
@@ -335,7 +335,7 @@ Please include meteoio_parametergroups before use!
 			<parameter key="CSV_ONLY_LINES" type="text" size="large" validate="^(?:\d+(?:\s*\-\s*\d+)?(?:\s*,\s*)?)+$">
 				<help>Restrict the parsing to a comma delimited list of line ranges (line numbers separated by ' - ') such as &lt;i&gt;456 - 468&lt;/i&gt; or individual lines. Please note that it is not possible to mix CSV_EXCLUDE_LINES and CSV_ONLY_LINES, only one type of specification may be provided.</help>
 			</parameter>
-			<parameter key="CSV_COVERAGE_HINT" type="text" size="large" validate="^([0-9]{4}(?:\-[0-1][0-9](?:\-[0-3][0-9])?)?)(?:\s+\-\s+([0-9]{4}(?:\-[0-1][0-9](?:\-[0-3][0-9])?)?)?)?$">
+			<parameter key="CSV_COVERAGE_HINT" type="text" size="large" validate="^([0-9]{4}(?:\-[0-1][0-9](?:\-[0-3][0-9])?)?)(?:\s+\-\s+([0-9]{4}(?:\-[0-1][0-9](?:\-[0-3][0-9])?)?)?)$">
 				<help>A simplified date range (at most daily resolution) fully encompassing the data contained in the file such as &lt;i&gt;2023-10 - 2024&lt;/i&gt; fully encompassing the temporal coverage of the file. This allows MeteoIO to skip files that don't contain data relevant for the date range requested when running.</help>
 			</parameter>
 		</frame>
@@ -433,6 +433,9 @@ Please include meteoio_parametergroups before use!
 					<help>Pure numerical (combined) date and time representation</help>
 				</option>
 				<help>Date and time representation</help>
+			</parameter>
+			<parameter key="CSV_MUTE_WARNINGS" type="text" size="large" validate="^(?:\d+(?:\s*\-\s*\d+)?(?:\s*,\s*)?)+$">
+				<help>Mute timestamp warnings (duplicated or out-of-order timestamps) for a comma delimited list of line ranges (line numbers separated by ' - ') such as &lt;i&gt;456 - 468&lt;/i&gt; or individual lines. The data will still be parsed, but no warnings will be emitted for these lines.</help>
 			</parameter>
 		</frame>
 	</parametergroup>
@@ -584,6 +587,9 @@ Please include meteoio_parametergroups before use!
 					</option>
 					<help>Date and time representation</help>
 				</parameter>
+				<parameter key="CSV#_MUTE_WARNINGS" type="text" size="large" validate="^(?:\d+(?:\s*\-\s*\d+)?(?:\s*,\s*)?)+$">
+					<help>Mute timestamp warnings (duplicated or out-of-order timestamps) for a comma delimited list of line ranges (line numbers separated by ' - ') such as &lt;i&gt;456 - 468&lt;/i&gt; or individual lines. The data will still be parsed, but no warnings will be emitted for these lines.</help>
+				</parameter>
 			</frame>
 		</frame>
 	</parametergroup>
@@ -612,7 +618,7 @@ Please include meteoio_parametergroups before use!
 			<help>should extra (ie very verbose) information be displayed?</help>
 		</parameter>
 	</parametergroup>
-	
+
 	<!-- DBO -->
 	<parametergroup name="DBO_IN">
 		<parameter type="helptext" wrap="true">
@@ -767,7 +773,7 @@ Please include meteoio_parametergroups before use!
 			<help>if set to true, the SNOWPACK simulated Snow Water Equivalent from the database will be used to compute PSUM. Data gaps greater than 3 hours on SWE will lead to unchanged hnw while all data that can properly be computed will overwrite hnw. (default=false)</help>
 		</parameter>
 	</parametergroup>
-	
+
 	<!-- METEOBLUE -->
 	<parametergroup name="METEOBLUE_IN">
 		<parameter key="METEOBLUE_URL" type="text" optional="true">
@@ -806,7 +812,7 @@ Please include meteoio_parametergroups before use!
 			<help>Enter the generated station's coordinates and optionally ids and names</help>
 		</parameter>
 	</parametergroup>
-	
+
 	<!-- MYSQL -->
 	<parametergroup name="MYSQL_IN">
 		<parameter key="MYSQL_HOST" type="text" optional="false">
@@ -823,7 +829,8 @@ Please include meteoio_parametergroups before use!
 		</parameter>
 		<parameter key="MYSQL_SCHEMA" type="alternative" optional="false">
 			<option value="WWCS"/>
-			<help>data schema to use</help>
+			<option value="SASE"/>
+			<help>data schema to use (SASE is experimental)</help>
 		</parameter>
 		<reference name="STATIONGROUP_NAMES"/>
 	</parametergroup>
@@ -917,11 +924,11 @@ Please include meteoio_parametergroups before use!
 		<parameter key="PSQL_USER" type="text" optional="false"/>
 		<parameter key="PSQL_PASS" type="text" optional="false"/>
 		<parameter key="SQL_META" type="text" optional="false">
-			<help>Query to retrieve the metadata. For example, &lt;code&gt;SELECT id, station_name AS name, x_coord AS x, y_coord AS y, z AS altitude, epsg from all_stations WHERE id IN&lt;/code&gt;
+			<help>Parametrized query to retrieve the metadata. For example, &lt;code&gt;SELECT id, station_name AS name, x_coord AS x, y_coord AS y, z AS altitude, epsg from all_stations WHERE id = $1&lt;/code&gt;
 			</help>
 		</parameter>
 		<parameter key="SQL_DATA" type="text" optional="false">
-			<help>Query to retrieve the data. For example, &lt;code&gt;SELECT * FROM all_measurements WHERE id = ''STATIONID'' AND date&gt;=''DATE_START'' AND date&lt;=''DATE_END'' ORDER BY date&lt;/code&gt;
+			<help>Parametrized query to retrieve the data. For example, &lt;code&gt;SELECT * FROM all_measurements WHERE id = $1 AND date ≥ $2 AND date ≤ $3 ORDER BY date&lt;/code&gt;
 			</help>
 		</parameter>
 		<parameter key="STATIONS" type="text" optional="false">
@@ -1003,7 +1010,7 @@ Please include meteoio_parametergroups before use!
 			<help>OPTIONAL: measured new snow density is provided</help>
 		</parameter>
 	</parametergroup>
-	
+
 	<!-- SYNTH -->
 	<parametergroup name="SYNTH">
 		<parameter key="SYNTH_START" type="datetime" optional="true">

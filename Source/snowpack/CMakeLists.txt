@@ -84,7 +84,7 @@ ELSE(WIN32)
 
 			#generate the application plist file for the bundle
 			STRING(TIMESTAMP TODAY_ISO UTC)
-			SET(MIO_BINARY "snowpack")	#this will be set later in applications/CMakeLists.txt, but it is needed here for the plist file
+			SET(NAME_BINARY "snowpack")	#this will be set later in applications/CMakeLists.txt, but it is needed here for the plist file
 			configure_file(
 				${CMAKE_CURRENT_SOURCE_DIR}/tools/snowpack.plist.in
 				${CMAKE_CURRENT_BINARY_DIR}/tools/snowpack.plist
@@ -256,7 +256,7 @@ IF(CPACK_BUNDLE_ALL)
 			INSTALL(FILES ${winpthreads} ${stdlibs} ${libgcc} DESTINATION bin PERMISSIONS ${ALL_RX_PERM} COMPONENT exe)
 		ENDIF(CPACK_BUNDLE_STDLIBS)
 	ENDIF(WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "^GNU$")
-	
+
 	#bundle MeteoIO
 	FIND_PACKAGE(MeteoIO REQUIRED)
 	IF(BUILD_SHARED_LIBS) #consider that if STATIC, we don't need the libs
@@ -268,10 +268,10 @@ IF(CPACK_BUNDLE_ALL)
 		ENDIF(WIN32)
 		FILE(GLOB meteoio_bins "${METEOIO_ROOT}/bin/meteoio_timeserie*")
 		INSTALL(FILES ${meteoio_bins} DESTINATION bin PERMISSIONS ${ALL_RX_PERM} COMPONENT exe)
-		INSTALL(DIRECTORY ${METEOIO_INCLUDE_DIR}/meteoio/ DESTINATION include/meteoio COMPONENT headers 
-		        FILES_MATCHING PATTERN "*.h" 
-		        PATTERN "CMakeFiles" EXCLUDE 
-		        PATTERN "icons" EXCLUDE 
+		INSTALL(DIRECTORY ${METEOIO_INCLUDE_DIR}/meteoio/ DESTINATION include/meteoio COMPONENT headers
+		        FILES_MATCHING PATTERN "*.h"
+		        PATTERN "CMakeFiles" EXCLUDE
+		        PATTERN "icons" EXCLUDE
 		        PATTERN "jnative" EXCLUDE)
 	ENDIF(BUILD_SHARED_LIBS)
 	IF(INSTALL_DOC)
@@ -382,7 +382,7 @@ ELSE(UNIX)
 		SET(CPACK_NSIS_MUI_ICON "${CPACK_PACKAGE_ICON}")
 		SET(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "${CPACK_PACKAGE_NAME}")
 		SET(CPACK_NSIS_MODIFY_PATH ON)
-		
+
 		#Main links (they can get overwritten later)
 		SET(MENU_LINKS_NIVIZ "https://run.niviz.org" "NIVIZ online visualization" )
 		SET(MENU_LINKS_SNOWPACK "https://snowpack.slf.ch" "SNOWPACK Home page")
@@ -392,20 +392,19 @@ ELSE(UNIX)
 			"${DOC_PATH}/examples" "SNOWPACK examples"
 			)
 		ENDIF(INSTALL_DOC)
-		
+
 		#all other links: inishell, meteoio
 		IF(CPACK_BUNDLE_ALL)
 			SET(MENU_LINKS_METEOIO "https://meteoio.slf.ch" "MeteoIO Home page")
 			IF(INSTALL_DOC)
 				LIST(APPEND MENU_LINKS_METEOIO
 				"${METEOIO_DOC}/MeteoIO_doc.html" "MeteoIO documentation"
-				"https://meteoio.slf.ch" "MeteoIO Home page"
 				)
 			ENDIF(INSTALL_DOC)
 		ENDIF(CPACK_BUNDLE_ALL)
-		
+
 		SET(CPACK_NSIS_MENU_LINKS ${MENU_LINKS_SNOWPACK} ${MENU_LINKS_INISHELL} ${MENU_LINKS_NIVIZ} ${MENU_LINKS_METEOIO})
-		
+
 		#info for the add/uninstall software administration
 		SET(CPACK_NSIS_DISPLAY_NAME "${CPACK_PACKAGE_NAME}-${VERSION}")
 		SET(CPACK_NSIS_INSTALLED_ICON_NAME "doc\\\\snowpack.ico")

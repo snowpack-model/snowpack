@@ -9,7 +9,10 @@ install_manifest.txt
 **/cmake_install.cmake
 **/cmake_uninstall.cmake
 **/Makefile
-DartConfiguration.tcl
+*build/
+sandbox/
+**/*iconset*/
+**/.nfs*
 
 #generated files
 /doc/html/*
@@ -17,9 +20,16 @@ lib/*
 /bin/*
 *.aux
 *.log
-build/
+*.logs
 compile_commands.json
-**/CTestTestfile.cmake
+Testing
+CTest*
+Dart*
+.DS_Store
+**/.DS_Store
+alpine3d/icons/alpine3d.rc
+alpine3d.cbp
+alpine3d.layout
 
 #editor files:
 *.swp
@@ -40,14 +50,15 @@ CPackSourceConfig.cmake
 *.tar.gz
 *.exe
 *.dmg
-*.DS_Store*
 
-#examples generated files
+#example files and binaries:
 doc/examples/Stillberg/output/grids/*
 doc/examples/Stillberg/output/9*
 doc/examples/Stillberg/output/io.ini
 
-#tests generated files
+#Ctest generated files
+*CTestTestfile.cmake
+*DartConfiguration.tcl
 tests/**/*.lwr
 tests/**/*.sdp
 tests/**/*.swe

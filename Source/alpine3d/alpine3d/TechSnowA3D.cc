@@ -21,9 +21,6 @@
 
 #include <errno.h>
 
-#include <algorithm> // for std::find
-#include <iterator>
-
 using namespace std;
 using namespace mio;
 

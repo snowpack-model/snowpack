@@ -20,6 +20,7 @@
 #define PROCESSINGSTACK_H
 
 #include <meteoio/meteoFilters/ProcessingBlock.h>
+#include <meteoio/dataQA.h>
 #include <meteoio/Config.h>
 #include <vector>
 #include <string>
@@ -53,7 +54,7 @@ class ProcessingStack {
 		
 		std::vector<ProcessingBlock*> filter_stack; //for now: strictly linear chain of processing blocks
 		const std::string param_name;
-		bool data_qa_logs;
+		DataQA data_qa;
 };
 
 } //end namespace

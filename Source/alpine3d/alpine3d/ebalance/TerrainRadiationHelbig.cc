@@ -69,7 +69,7 @@ void TerrainRadiationHelbig::getRadiation(mio::Array2D<double> &direct, mio::Arr
                                           mio::Array2D<double> &terrain, const mio::Array2D<double>& /*direct_unshaded_horizontal*/, 
                                           const mio::Array2D<double> &total_ilwr, mio::Array2D<double>& /*sky_ilwr*/,
                                           mio::Array2D<double> &/*terrain_ilwr*/,
-                                          double /*solarAzimuth*/, double /*solarElevation*/)
+                                          const double& /*solarAzimuth*/, const double& /*solarElevation*/)
 {
 	std::cout << "[i] Computing Helbig radiation" << std::endl;
 	tdir = direct;

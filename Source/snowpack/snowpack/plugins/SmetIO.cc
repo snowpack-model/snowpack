@@ -56,23 +56,27 @@ using namespace mio;
  * - the number of soil and snow layers <b>must</b> be right!
  * - timestamps follow the ISO format, temperatures are given in Kelvin, thicknesses in m, fractional volumes are between 0 and 1 (and the total sum <b>must</b> be exactly one), densities are in kg/m<SUP>3</SUP> (see the definition of the fields in the table below)
  *
- * <center><table border="0">
- * <caption>initial snow profile fields description</caption>
+ * <center><table style="border: 0px solid black; border-collapse: collapse; width: 100%">
+ * <tr><th colspan="2">initial snow profile fields</th></tr>
  * <tr><td>
- * <table border="1">
+ * <table border="1" style="width: 100%">
  * <tr><th>Field</th><th>Description</th></tr>
  * <tr><th>timestamp</th><td>ISO formatted time</td></tr>
  * <tr><th>Layer_Thick</th><td>layer thickness [mm]</td></tr>
  * <tr><th>T</th><td>layer temperature [K]</td></tr>
  * <tr><th>Vol_Frac_I</th><td>fractional ice volume [0-1]</td></tr>
+ * <tr><th><i>Vol_Frac_IR</i></th><td><i>(optional) fractional ice reservoir volume [0-1]</i></td></tr>
+ * <tr><th><i>Vol_Frac_CIR</i></th><td><i>(optional) cummulated ice reservoir volume</i></td></tr>
  * <tr><th>Vol_Frac_W</th><td>fractional water volume [0-1]</td></tr>
+ * <tr><th><i>Vol_Frac_WP</i></th><td><i>(optional)fractional preferential water volume [0-1]</i></td></tr>
  * <tr><th>Vol_Frac_V</th><td>fractional voids volume [0-1]</td></tr>
  * <tr><th>Vol_Frac_S</th><td>fractional soil volume [0-1]</td></tr>
  * <tr><th>Rho_S</th><td>soil density [kg/m3]</td></tr>
+ * </table></td>
+ * <td><table border="1" style="width: 100%">
+ * <tr><th>Field</th><th>Description</th></tr>
  * <tr><th>Conduc_S</th><td>mineral phase soil thermal conductivity [w/(mK)]</td></tr>
  * <tr><th>HeatCapac_S</th><td>mineral phase soil thermal capacity [J/(kg*K)]</td></tr>
- * </table></td><td><table border="1">
- * <tr><th>Field</th><th>Description</th></tr>
  * <tr><th>rg</th><td>grain radius [mm]</td></tr>
  * <tr><th>rb</th><td>bond radius [mm]</td></tr>
  * <tr><th>dd</th><td>dendricity [0-1]</td></tr>
@@ -82,14 +86,13 @@ using namespace mio;
  * <tr><th>ne</th><td>number of elements</td></tr>
  * <tr><th>CDot</th><td>stress change rate (initialize with 0.)</td></tr>
  * <tr><th>metamo</th><td>currently unused</td></tr>
- * <tr><th> <br></th><td> </td></tr>
  * </table></td></tr>
  * </table></center>
- * 
+ *
  * Depending on the sub-models that have been enabled, it might be necessary to provide additional fields:
- *  - \ref preferential_flow "Preferential flow": 
+ *  - \ref preferential_flow "Preferential flow":
  *        - Vol_Frac_WP - fractional preferential water volume [0-1];
- *  - \ref ice_reservoir "Ice reservoir": 
+ *  - \ref ice_reservoir "Ice reservoir":
  *        - Vol_Frac_IR - fractional ice reservoir volume [0-1];
  *        - Vol_Frac_CIR - cummulated ice reservoir volume;
  *
@@ -387,6 +390,7 @@ mio::Date SmetIO::read_snosmet(const std::string& snofilename, const std::string
 	if (vec_timestamp.size() != SSdata.nLayers)
 		throw InvalidFormatException("Xdata: Layers expected != layers read in " + sno_reader.get_filename(), AT);
 
+	//TODO in order to parse the fields from the field names, use sno_reader.get_field_name( ii )
 	const size_t nr_of_fields = sno_reader.get_nr_of_fields();
 	const size_t nr_of_solutes = (nr_of_fields - 18) / 4;
 

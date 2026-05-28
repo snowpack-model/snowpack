@@ -74,7 +74,7 @@ class VapourTransport : public WaterTransport {
 		bool useSoilLayers, water_layer;
 
 		bool enable_vapour_transport;
-		double diffusionScalingFactor_, height_of_meteo_values;
+		double height_of_meteo_values;
 		bool adjust_height_of_meteo_values;
 
 		const static double f;

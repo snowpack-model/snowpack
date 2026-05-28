@@ -51,11 +51,11 @@ using namespace mio;
  * A second kind of liquid water transport mechanism is through preferential flow. This is a 2 dimensional effect where at some places the liquid water is able to locally
  * flow much deeper into the snow pack. Although highly relevant for its impact on the snow microstructure and for its impact on snow stability, this transport mechanism
  * only carries a minority of the liquid water mass. But by providing liquid water in deeper layers much faster, it can contribute to triggering a weak layer or accumulate
- * liquid water at a capillary barrier (<i>ponding</i>) that could later refreeze and build an ice layer. 
- * 
+ * liquid water at a capillary barrier (<i>ponding</i>) that could later refreeze and build an ice layer.
+ *
  * The current implementation relies on a dual domain approach
  * where the liquid water transport is split between a matrix flow and a preferential flow (Wever et al., <i>"Simulating ice layer formation under the presence of preferential flow in layered snowpacks"</i>, The Cryosphere, 10, 2731–2744, <a href="https://doi.org/10.5194/tc-10-2731-2016">10.5194/tc-10-2731-2016</a>, 2016). In order to allow the preferential flow liquid water to refreeze, it is necessary to enable the \ref ice_reservoir "ice reservoir" model.
- * 
+ *
  * @subsubsection ice_reservoir Ice reservoir
  * One of the issue with the dual domain preferential flow approach is that it is not easily possible to let liquid water that has been transported this way
  * to refreeze (for example when ponding occurs). Therefore an additional model has been implemented (Quéno et al., <i>"Deep ice layer formation in an alpine snowpack: monitoring and modeling"</i>, The Cryosphere, 14, 3449–3464, <a href="https://doi.org/10.5194/tc-14-3449-2020">10.5194/tc-14-3449-2020</a>, 2020).
@@ -87,7 +87,17 @@ using namespace mio;
  *     large phase changes can occur at the first time step. To enforce thermal equilibrium in the soil, the key REQ_INITIALIZE_SOIL can be set to true. This then repartitions
  *     the ICE and WATER content of the layer, while keeping the temperature constant, at the first time step after initialization.
  *
- * @section snowpack_wt_keys Configuration keys
+ * @section snowpack_wt_keys Configuration keys & SNO files fields
+ *
+ * Please have a look at the \ref layers_data "initial layer data specification" as the *.sno files have to contain additional fields for several of these submodels.
+ *
+ * The following configuration keys are available to control the water t6ransport modeling:
+ *    - WATERTRANSPORTMODEL_SNOW: either BUCKET (default), NIED or RICHARDSEQUATION;
+ *         - PREF_FLOW: either TRUE or FALSE (default);
+ *               - ICE_RESERVOIR: either TRUE or FALSE (default);
+ *         - PREF_FLOW_RAIN_INPUT_DOMAIN: either MATRIX (default) or PREF_FLOW;
+ *    - WATERTRANSPORTMODEL_SOIL: either BUCKET (default), NIED or RICHARDSEQUATION. Please note that if using RICHARDSEQUATION for the snow,
+ * it is mandatory to also use it for the soil.
  *
  */
 
@@ -495,23 +505,26 @@ void WaterTransport::compTopFlux(double& ql, SnowStation& Xdata, SurfaceFluxes& 
 }
 
 /**
- * @brief Merging snow elements \n
- * - Starting from the surface, merge as many snow elements as you can; \n
- * 	  Merge too thin elements with their lower neighbour; keep buried SH and tagged layers longer on \n
- * 	  but enforce merging for uncovered but previously buried SH \n
- * 	  => Use SnowStation::mergeElements() to compute the properties of the lower element
- * - NOTE
+ * @brief Merging snow elements
+ * @details
+ * Starting from the surface, merge as many snow elements as you can;
+ * Merge too thin elements with their lower neighbour; keep buried SH and tagged layers longer on
+ * but enforce merging for uncovered but previously buried SH
+ * => Use SnowStation::mergeElements() to compute the properties of the lower element
+ * \note
  * 	- Only the top or last element on the ground will be effectively removed if needed
  * 	- Water will be transported AFTER elements have been merged.
  * 	- If WATER_LAYER is set with soil, make sure that you keep a potential wet water layer over soil or ice
  * 	- Reset ground surface temperature if no snow is left and there is no soil
- * @param *Xdata
- * @param *Sdata
+ *
+ * @param *Xdata SnowStation data
+ * @param *Sdata surface fluxes data
+ * @param VapourTransport set to true if using vapour transport (in this case some mass might be lost if there is too little pore space)
  */
 void WaterTransport::mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata, const bool& VapourTransport)
 {
 	const size_t nN = Xdata.getNumberOfNodes(), nE = nN-1;
-	size_t rnN = nN, rnE = nN-1;
+	size_t rnE = nN-1;
 	vector<ElementData>& EMS = Xdata.Edata;
 
 	if ((nN == Xdata.SoilNode+1)
@@ -655,7 +668,6 @@ void WaterTransport::mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata, c
 				}
 			}
 			rnE--;
-			rnN--;
 			if(UpperJoin==false) {
 				EMS[eUpper].Rho = Constants::undefined;
 				if (!merged) {
@@ -669,9 +681,8 @@ void WaterTransport::mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata, c
 			} else {
 				if (EMS[eUpper+1].Rho == Constants::undefined) {
 					// The upper join has the risk that an element (eUpper+1) could become marked Rho == Constants::undefined twice,
-					// in which case we reduced rnE and rnN one too much.
+					// in which case we reduced rnE one too much.
 					rnE++;
-					rnN++;
 				} else {
 					EMS[eUpper+1].Rho = Constants::undefined;
 					if (!merged && EMS[eUpper+1].L > 0.) {
@@ -1226,20 +1237,25 @@ void WaterTransport::transportWater(const CurrentMeteo& Mdata, SnowStation& Xdat
 }
 
 /**
- * @brief The mass transport procedure is called from sn_Snowpack -- AFTER calling
+ * @brief Compute the mass of water that is transported through the layers
+ * @details
+ * The mass transport procedure is called from sn_Snowpack -- AFTER calling
  * the NEWSNOW (sn_SnowFall) or SNOWDRIFT (sn_SnowDrift) modules but BEFORE
  * calling the TEMPERATURE (sn_SnowTemperature), PHASECHANGE (pc_PhaseChange)
- * or CREEP (sn_SnowCreep) routines. \n
+ * or CREEP (sn_SnowCreep) routines.
+ *
  * The mass transport routines were inserted at this location since they can set the NEWMESH
- * variable which means the FEM data structures must be reallocated before solving the instationary heat equations(?) \n
+ * variable which means the FEM data structures must be reallocated before solving the instationary heat equations(?)
  * These routines are responsible for MOVING MASS (water) in, out and through the
  * snowpack.  They are subsequently responsible for WATER TRANSPORT and SURFACE
  * SUBLIMATION.  Since surface sublimation does not change the FE data structure
- * it is treated FIRST. \n
+ * it is treated FIRST.
+ *
  * The phase change routines will increment the volumetric water content of the
  * elements, then the WATER TRANSPORT routines will move the excess water from
- * element "e" to element "e-1". \n
- * NOTES:
+ * element "e" to element "e-1".
+ *
+ * \note
  * -#  The water will only be moved if it is above the residual water content
  * -#   The water will only be moved if there is enough VOID SPACE in the element
  *      receiving the water
@@ -1249,7 +1265,8 @@ void WaterTransport::transportWater(const CurrentMeteo& Mdata, SnowStation& Xdat
  *      of the MICRO-properties of the snow.  This is simply a few lines of code. \n
  *      This was done on 3 Dec 2006 -> ElementData::snowResidualWaterContent().
  * -#   IMPORTANT: the top surface element can be removed if the VOLUMETRIC ICE
- *      content is 0; that is, when the element contains only water and voids. \n
+ *      content is 0; that is, when the element contains only water and voids.
+ *
  * The routines were changed dramatically by Perry on June 3rd 1998 after Perry
  * and Michael worked the entirity of June 2nd together.  We were running
  * the model operationally in Davos and discovered that the code was bombing

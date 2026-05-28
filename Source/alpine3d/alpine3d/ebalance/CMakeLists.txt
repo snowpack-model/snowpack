@@ -1,4 +1,5 @@
-INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}")
+#SPDX-License-Identifier: LGPL-3.0-or-later
+INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/")
 
 SET(ebalance_sources
 	ebalance/EnergyBalance.cc
@@ -14,8 +15,3 @@ SET(ebalance_sources
 	ebalance/TerrainRadiationComplex.cc
 	ebalance/SnowBRDF.cc
 )
-
-IF(MPI)
-	FIND_PACKAGE(MPI REQUIRED)
-	INCLUDE_DIRECTORIES(SYSTEM ${MPI_INCLUDE_PATH})
-ENDIF(MPI)

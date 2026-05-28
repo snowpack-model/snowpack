@@ -33,20 +33,20 @@ namespace mio {
 /**
  * @page csvio CsvIO
  * @section csvio_format Format
- * This plugins offers a flexible way to read Comma Separated Values (<A HREF="https://en.wikipedia.org/wiki/Comma-separated_values">CSV</A>) files. 
+ * This plugins offers a flexible way to read Comma Separated Values (<A HREF="https://en.wikipedia.org/wiki/Comma-separated_values">CSV</A>) files.
  * It is however assumed that:
  *     - each line contains a data record (or is an empty line)
  *     - each line contains the same number of fields;
  *     - a single character is consistently used through the file as field delimiter (to split each record into fields);
- *     - missing data are represented by an empty value, so two delimiters follow directly each other or by a special value (see NODATA in 
+ *     - missing data are represented by an empty value, so two delimiters follow directly each other or by a special value (see NODATA in
  * \ref csvio_metadata_extraction "Metadata extraction");
  *     - the file may contain a header that may contain additional information (metadata), see below.
- * 
- * In order to reduce the amount of manual configuration, it is possible to extract metadata from the headers or the filename, 
+ *
+ * In order to reduce the amount of manual configuration, it is possible to extract metadata from the headers or the filename,
  * such as the station name, ID, coordinates, etc
  *
  * @section csvio_units Units
- * **The final units MUST be <a href="https://www.bipm.org/documents/20126/41483022/SI-Brochure-9-EN.pdf">coherent derived SI units</a>** 
+ * **The final units MUST be <a href="https://www.bipm.org/documents/20126/41483022/SI-Brochure-9-EN.pdf">coherent derived SI units</a>**
  * (section 2.3.4 in the SI-Brochure). If not, the conversion offsets/factors must be provided to convert the data back to SI (see required keywords below)
  * or the units declared (in the headers) and supported by this plugin.
  *
@@ -60,9 +60,9 @@ namespace mio {
  * - CSV_FILE_EXTENSION: When scanning the whole directory, look for these files (default: .csv). Note that this matching isn't restricted to the end of the file name so if you had files stat1_jan.csv, stat1_feb.csv and stat2_jan.csv you could select January's data by putting "_jan" here;
  * - CSV_SILENT_ERRORS: if set to true, lines that can not be read will be silently ignored (default: false, has priority over CSV_ERRORS_TO_NODATA);
  * - CSV_ERRORS_TO_NODATA: if true, unparseable fields (like text fields) are set to nodata, but the rest of the line is kept (default: false).
- * 
- * You can now describe the specific format for all files (prefixing the following keys by \em "CSV_") or for each particular file (prefixing the following 
- * keys by \em "CSV#_" where \em "#" represents the station index). Of course, you can mix keys that are defined for all files with some keys only defined for a 
+ *
+ * You can now describe the specific format for all files (prefixing the following keys by \em "CSV_") or for each particular file (prefixing the following
+ * keys by \em "CSV#_" where \em "#" represents the station index). Of course, you can mix keys that are defined for all files with some keys only defined for a
  * few specific files (the keys defined for a particular station have priority over the global version).
  * - CSV\#_DELIMITER: field delimiter to use (default: ','), use SPACE or TAB for whitespaces (in this case, multiple whitespaces directly following each other are considered to be only one whitespace);
  * - CSV\#_NODATA: a space delimited list of strings (of course, this also contains numbers such as -6999) that should be interpreted as \em nodata (default: NAN NULL);
@@ -78,6 +78,7 @@ namespace mio {
  *    - CSV\#_PURGE_CHARS: space delimited list of ascii characters to purge from the input, either directly given or as decimal representation or as hexadecimal representation (prefixed with <i>0x</i>). Example: 0x40 13 \" ;
  *    - CSV\#_EXCLUDE_LINES: a comma delimited list of line ranges (numbers separated by a dash) or line numbers to exclude from parsing (ie the lines within these ranges will be read and discarded immediately). Example:  <i>18 - 36, 52, 55, 167 - 189</i>. Please note that it is not possible to mix CSV\#_EXCLUDE_LINES and CSV\#_ONLY_LINES and that additional spaces (for more clarity in the input, as in the provided example) can be used although they are not mandatory.
  *    - CSV\#_ONLY_LINES: a comma delimited list of line ranges (numbers separated by a dash enclosed in spaces) or line numbers to restrict the parsing to (ie the lines outside of these ranges will be read and discarded immediately). Example:  <i>18 - 36, 52, 55, 167 - 189</i>. Please note that it is not possible to mix CSV\#_EXCLUDE_LINES and CSV\#_ONLY_LINES.
+ *    - CSV\#_MUTE_WARNINGS: a comma delimited list of line ranges (numbers separated by a dash enclosed in spaces) or line numbers for which warnings (duplicated or out-of-order timestamps) should be muted. The data will still be parsed, but no warnings will be emitted for these lines. Example:  <i>12, 345-350, 12300-14000</i>.
  *    - CSV\#_COVERAGE_HINT: a simplified date range (at most daily resolution) fully encompassing the data contained in the file. This is a useful optimization when a dataset is made of many CSV files covering a very large temporal range and MeteoIO is used to generate subsets of the dataset on-demand. In this case, MeteoIO can skip some files if their temporal coverage does not overlap with the requested temporal period. Examples: <i>2021</i> (this means, all of 2021) or <i>2020-10 - 2023</i> (this means from 2020-10-01T00:00 until the last second of 2023).
  * - <b>Fields parsing</b>
  *    - CSV\#_COLUMNS_HEADERS: header line to interpret as columns headers (default: 1, see also \ref csvio_special_fields "special field names");
@@ -95,10 +96,10 @@ namespace mio {
  *       - CSV\#_TIME_SPEC: time format specification (default: HH24:MI:SS);
  *    - Date/Time decimal representation:
  *       - CSV\#_DECIMALDATE_TYPE: the numerical representation that is used, one of EXCEL, JULIAN, MJULIAN, MATLAB, RFC868 or UNIX (see \ref decimal_date_representation "decimal date representations");
- *    - Date/Time as separate components: 
+ *    - Date/Time as separate components:
  *       - the fields must be named (either from the headers or through the CSV\#_FIELDS key) as YEAR, YEAR_2DIGITS (only the last 2 digits of the year, numbers before 40 will be converted to years after 2000), JDAY (number of days since the beginning of the year), MONTH, DAY, NTIME (numerical representation of time, for example 952 for 09:52), HOURS, MINUTES, SECONDS (if minutes or seconds are missing, they will be assumed to be zero). See \ref csvio_special_fields "special field names" for accepted synonyms;
  *       - if/when no year component is provided, it is possible to define a fallback year with the CSV\#_FALLBACK_YEAR key;
- *       - when using CSV\#_FALLBACK_YEAR, it will by default assume that all data for times greater than 1st October that appear 
+ *       - when using CSV\#_FALLBACK_YEAR, it will by default assume that all data for times greater than 1st October that appear
  * before data belonging to times before 1st of October are actually data from the year before. Please set CSV\#_FALLBACK_AUTO_WRAP to false if this is not desired.
  * - <b>Metadata</b>
  *    - CSV\#_NAME: a descriptive station name to use (if provided, has priority over the special headers);
@@ -111,23 +112,23 @@ namespace mio {
  *       - METEOFILE\#: input filename (in METEOPATH). As many meteofiles as needed may be specified. If nothing is specified, the METEOPATH directory will be scanned for files with the extension specified in CSV_FILE_EXTENSION;
  *       - POSITION\#: coordinates of the station (default: reading key "POSITION", see \link Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, std::string coord_spec) Coords()\endlink for the syntax). This key can only be omitted if lat/lon/altitude are provided in the file name or in the headers (see CSV\#_FILENAME_SPEC and CSV\#_SPECIAL_HEADERS);
  *
- * If no ID has been provided, an automatic station ID will be generated as "ID{n}" where *n* is the current station's index. Regarding the units handling, 
+ * If no ID has been provided, an automatic station ID will be generated as "ID{n}" where *n* is the current station's index. Regarding the units handling,
  * it is only performed through either the CSV_UNITS_OFFSET key or the CSV_UNITS_OFFSET / CSV_UNITS_MULTIPLIER keys. These keys expect a value for each
  * column of the file, including the date and time.
- * 
+ *
  * @subsection csvio_special_fields Special field names
- * When reading the field names, either from a file header or as provided in the configuration file with the CSV\#_FIELDS key, the fields will be attributed to 
- * variables bearing the same names. But some field names will be recognized and automatically interpreted as either known internal 
- * parameter names (see \ref meteoparam "this list") or date/time parameters or stationID the data belongs to. Besides MeteoIO's internal parameter names, the 
+ * When reading the field names, either from a file header or as provided in the configuration file with the CSV\#_FIELDS key, the fields will be attributed to
+ * variables bearing the same names. But some field names will be recognized and automatically interpreted as either known internal
+ * parameter names (see \ref meteoparam "this list") or date/time parameters or stationID the data belongs to. Besides MeteoIO's internal parameter names, the
  * following field names are also automatically recognized (synonyms are separated by ',' while different parameters are separated by ';'):
  *    - TIMESTAMP, TS, DATETIME; DATE; TIME; YEAR; JDAY, JDN, YDAY, DAY_OF_YEAR, DOY; MONTH; DAY; NTIME; HOUR, HOURS; MINUTE, MINUTES; SECOND, SECONDS; ID, STATIONID;
  *    - TEMPERATURE_AIR, AIRTEMP; SOIL_TEMPERATURE, SOILTEMP; PRECIPITATION, PREC; REFLECTED_RADIATION; INCOMING_RADIATION, INCOMINGSHORTWAVERADIATION; WIND_DIRE
 CTION, WD; RELATIVE_HUMIDITY, RELATIVEHUMIDITY; WIND_VELOCITY, WS; PRESSURE, STATIONPRESSURE; INCOMING_LONGWAVE, INCOMINGLONGWAVERADIATION; SNOWSURFACETEMPERATURE; WS_MAX;
- * 
- * @note Since most parameter won't have names that are recognized by MeteoIO, it is advised to map them to \ref meteoparam "MeteoIO's internal names". 
- * This is done either by using the CSV_FIELDS key or using the EditingMove feature of the 
+ *
+ * @note Since most parameter won't have names that are recognized by MeteoIO, it is advised to map them to \ref meteoparam "MeteoIO's internal names".
+ * This is done either by using the CSV_FIELDS key or using the EditingMove feature of the
  * \ref data_editing "Input Data Editing" stage.
- * 
+ *
  * @section csvio_date_specs Date and time specification
  * In order to be able to read any date and time format, the format has to be provided in the configuration file. This is provided as a string containing
  * the following special markers:
@@ -145,18 +146,18 @@ CTION, WD; RELATIVE_HUMIDITY, RELATIVEHUMIDITY; WIND_VELOCITY, WS; PRESSURE, STA
  * - YYYY-MM-DDTHH24:MI:SS described an <A HREF="https://en.wikipedia.org/wiki/ISO_8601">ISO 8601</A> datetime field;
  * - MM/DD/YYYY described an anglo-saxon date;
  * - DD.MM.YYYY HH24:MI:SS is for a Swiss formatted datetime.
- * 
+ *
  * @note When providing a timezone field, it \em must appear at the end of the string. it can either be numerical (such as "+1.") or an abbreviation
  * such as "Z" or "CET" (see https://en.wikipedia.org/wiki/List_of_time_zone_abbreviations).
- * 
+ *
  * When this plugin identifies the fields by their column headers, it will look for TIMESTAMP or DATETIME for a combined date and time field, or DATE or TIME for (respectively) a
  * date and time field. Usually, other labels will not be recognized.
- * 
+ *
  * @section csvio_metadata_extraction Metadata extraction
  * Since there is no unified way of providing metadata (such as the location, station name, etc) in CSV files, this information has to
  * be either provided in the configuration file (see \ref csvio_keywords "Configuration keywords") or extracted out of either the file
  * name or the file headers. A specific syntax allows to describe where to find which metadata field type.
- * 
+ *
  * @subsection csvio_metadata_field_types Metadata fields types
  * The following field types are supported:
  * - NAME;
@@ -171,42 +172,42 @@ CTION, WD; RELATIVE_HUMIDITY, RELATIVEHUMIDITY; WIND_VELOCITY, WS; PRESSURE, STA
  * - NODATA (string to interpret as nodata);
  * - PARAM (the extracted metadata will replace the PARAM field either as found in the file's headers or in the CSV_FIELDS user configuration key);
  * - SKIP or - (skip this field).
- * 
+ *
  * If ID or NAME appear more than once in one specification string, their multiple values will be appended.
  *
  * @subsection csvio_special_headers Header metadata extraction
- * This is performed with the "CSV#_SPECIAL_HEADERS" configuration key. This key is followed by as many metadata 
+ * This is performed with the "CSV#_SPECIAL_HEADERS" configuration key. This key is followed by as many metadata
  * specifications as necessary, of the form {field}:{line}:{column}.
  *
  * Therefore, if the station name is available on line 1, column 3 and the station id on line 2, column 5, the configuration would be:
  * @code
  * CSV_SPECIAL_HEADERS = name:1:3 id:2:5
  * @endcode
- * 
+ *
  * @subsection csvio_filename_parsing Filename metadata extraction
- * This is performed with the "CSV#_FILENAME_SPEC" configuration key. This key is followed by the metadata specification 
- * that will be applied to identify the information to extract as well as substrings that are used as "markers" delimiting 
+ * This is performed with the "CSV#_FILENAME_SPEC" configuration key. This key is followed by the metadata specification
+ * that will be applied to identify the information to extract as well as substrings that are used as "markers" delimiting
  * the different fields (enclosed within {}).
- * 
+ *
  * For example, to parse the filename "H0118_Generoso-Calmasino_-_Precipitation.csv" use (please note that the extension is NOT provided):
  * @code
  * CSV_FILENAME_SPEC = {ID}_{NAME}-{SKIP}_-_{PARAM}
  * @endcode
- * 
- * If the CSV_FIELDS key is also present, it will have priority. Therefore, it is possible to define one CSV_FILENAME_SPEC for several files and 
+ *
+ * If the CSV_FIELDS key is also present, it will have priority. Therefore, it is possible to define one CSV_FILENAME_SPEC for several files and
  * only define CSV\#_FIELDS for the files that would require a different handling (for example because their parameter would not be recognized).
  * Moreover, it is possible to set \em "AUTOMERGE" to "true" in the [InputEditing] section, so all files leading to the same station ID will be merged together
  * into one single station.
- * 
+ *
  * @note Obviously, the {PARAM} metadata field type can only be used for files that contain the time information (either as datetime or separate date and time) and one
  * meteorological parameter. If there are multiple (potentially unimportant) parameters in your file you have to set CSV_SINGLE_PARAM_INDEX to the column number
  * matching your parameter.
- * 
+ *
  * @section csvio_examples Examples
  * This section contains some exemplary CSV files together with the INI configuration to read them.
- * 
+ *
  * In order to read a bulletin file downloaded from IDAWEB, you need the following configuration:
- * 
+ *
  * CSV
  * @code
  * "COLUMN TO SKIP" "TIMESTAMP" "COL 1" "COL 2" "COL 3" "COL TO SKIP" "COL TO SKIP" "COL 4" "COL TO SKIP" "COL TO SKIP" "COL 5"
@@ -234,7 +235,7 @@ CTION, WD; RELATIVE_HUMIDITY, RELATIVEHUMIDITY; WIND_VELOCITY, WS; PRESSURE, STA
  * @endcode
  *
  * In order to read a CSV file produced by a Campbell data logger with Swiss-formatted timestamps, you need the following configuration:
- * 
+ *
  * CSV
  * @code
  * An arbitrary header line
@@ -262,7 +263,7 @@ CTION, WD; RELATIVE_HUMIDITY, RELATIVEHUMIDITY; WIND_VELOCITY, WS; PRESSURE, STA
  * @endcode
  *
  * For a logger produced csv file with repeating headers and quoted timestamps, you need the following configuration:
- * 
+ *
  * CSV
  * @code
  * # a information header line that is skipped
@@ -295,7 +296,7 @@ CTION, WD; RELATIVE_HUMIDITY, RELATIVEHUMIDITY; WIND_VELOCITY, WS; PRESSURE, STA
  * CSV_DATETIME_SPEC = "YYYY-MM-DD HH24:MI:SS"
  * POSITION = xy(198754, 723458,2200)
  * @endcode
- * 
+ *
  * In order to read a set of files each containing only one parameter and merge them together (see \ref data_editing "input data editing" for more
  * on the merge feature), extracting the station ID, name and meteorological parameter from the filename:
  *@code
@@ -325,7 +326,7 @@ CTION, WD; RELATIVE_HUMIDITY, RELATIVEHUMIDITY; WIND_VELOCITY, WS; PRESSURE, STA
  * @endcode
  * Please note that here the file's headers will look like 'DATE;TIME;PARAM' which will allow PARAM to be replaced by
  * the PARAM special value extracted from the file name.
- * 
+ *
  * In order to read a set of files and merge them together (see \ref data_editing "input data editing" for more
  * on the merge feature):
  *@code
@@ -359,26 +360,26 @@ CTION, WD; RELATIVE_HUMIDITY, RELATIVEHUMIDITY; WIND_VELOCITY, WS; PRESSURE, STA
  * [InputEditing]
  * ID1::MERGE = ID2 ID3 ID4 ID5
  * @endcode
- * 
+ *
  * When reading a file containing the data from multiple stations, each line containing the station ID it applies to, it is necessary
  * to provide the requested station ID for each new station as well as declare which is the ID field (if the headers declare an "ID" column or
  * a "STATIONID" column, this will also work)
  * @code
  * METEO = CSV
  * METEOPATH = ./input
- * CSV_DELIMITER = ,   
+ * CSV_DELIMITER = ,
  * CSV_NR_HEADERS = 1
  * CSV_COLUMNS_HEADERS = 1
  * CSV_DATETIME_SPEC = YYYY-MM-DD HH24:MI:SS
  * CSV_FIELDS = ID TIMESTAMP SKIP TA RH DW VW SKIP HS SKIP SKIP P SKIP SKIP SKIP ISWR SKIP SKIP SKIP TSG SKIP SKIP ISWR ILWR TSS
  * CSV_UNITS_OFFSET = 0 0 0 273.15 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 273.15
  * CSV_UNITS_MULTIPLIER = 1 1 1 1 0.01 1 1 1 0.01 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
- * 
+ *
  * METEOFILE1 = Extracted_data.csv
  * POSITION1 = latlon (46.8, 9.81, 1511.826)
  * CSV1_ID = 109
  * CSV1_NAME = Station109
- * 
+ *
  * METEOFILE2 = Extracted_data.csv
  * POSITION2 = xy (45.8018, 9.82, 111.826)
  * CSV2_ID = 105
@@ -409,7 +410,7 @@ CTION, WD; RELATIVE_HUMIDITY, RELATIVEHUMIDITY; WIND_VELOCITY, WS; PRESSURE, STA
 ///////////////////////////////////////////////////// Now the real CsvIO class starts //////////////////////////////////////////
 const size_t CsvIO::streampos_every_n_lines = 2000; //save streampos every 2000 lines of data
 
-CsvIO::CsvIO(const std::string& configfile) 
+CsvIO::CsvIO(const std::string& configfile)
       : cfg(configfile), indexer_map(), csvparam(), vecStations(),
         coordin(), coordinparam(), silent_errors(false), errors_to_nodata(false) { parseInputOutputSection(); }
 
@@ -420,7 +421,7 @@ CsvIO::CsvIO(const Config& cfgreader)
 void CsvIO::parseInputOutputSection()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam);
-	
+
 	cfg.getValue("CSV_SILENT_ERRORS", "Input", silent_errors, IOUtils::nothrow);
 	cfg.getValue("CSV_ERRORS_TO_NODATA", "Input", errors_to_nodata, IOUtils::nothrow);
 
@@ -432,15 +433,15 @@ void CsvIO::parseInputOutputSection()
 		std::cerr << "[W] The STATION# syntax has been deprecated for the CSV input plugin, please rename these keys as METEOFILE#!\n";
 		//throw InvalidArgumentException("The STATION# syntax has been deprecated for the CSV plugin, please rename these keys as METEOFILE#!", AT);
 	}
-	
+
 	const double in_TZ = cfg.get("TIME_ZONE", "Input");
 	const std::string meteopath = cfg.get("METEOPATH", "Input");
 	std::vector< std::pair<std::string, std::string> > vecFilenames( cfg.getValues(meteofiles_key, "INPUT") );
 
 	if (vecFilenames.empty()) { //scan all of the data path for a given file extension if no stations are specified
 		std::string csvext(".csv");
-		cfg.getValue("CSV_FILE_EXTENSION", "Input", csvext, IOUtils::nothrow); 
-		
+		cfg.getValue("CSV_FILE_EXTENSION", "Input", csvext, IOUtils::nothrow);
+
 		std::vector<std::string> tmpFilenames;
 		scanMeteoPath(cfg, meteopath, tmpFilenames, csvext);
 
@@ -449,26 +450,26 @@ void CsvIO::parseInputOutputSection()
 			hit++;
 			std::stringstream ss;
 			ss << meteofiles_key << hit; //assign alphabetically ordered ID to station
-			
+
 			const std::pair<std::string, std::string> stat_id_and_name(ss.str(), filename);
 			vecFilenames.push_back(stat_id_and_name);
 		}
-	} 
-	
+	}
+
 	for (size_t ii=0; ii<vecFilenames.size(); ii++) {
 		const std::string idx( vecFilenames[ii].first.substr(meteofiles_key.length()) );
 		static const std::string dflt("CSV_"); //the prefix for a key for ALL stations
 		const std::string pre( "CSV"+idx+"_" ); //the prefix for the current station only
-		
+
 		CsvParameters tmp_csv(in_TZ);
 		std::string coords_specs;
 		if (cfg.keyExists("POSITION"+idx, "INPUT")) cfg.getValue("POSITION"+idx, "INPUT", coords_specs);
 		else cfg.getValue("POSITION", "INPUT", coords_specs, IOUtils::nothrow);
-		
+
 		std::string name;
 		if (cfg.keyExists(pre+"NAME", "Input")) cfg.getValue(pre+"NAME", "Input", name);
 		else cfg.getValue(dflt+"NAME", "Input", name, IOUtils::nothrow);
-		
+
 		std::string id;
 		if (cfg.keyExists(pre+"ID", "Input")) cfg.getValue(pre+"ID", "Input", id);
 		else cfg.getValue(dflt+"ID", "Input", id, IOUtils::nothrow);
@@ -480,7 +481,7 @@ void CsvIO::parseInputOutputSection()
 		} else {
 			tmp_csv.setLocation(Coords(), name, id);
 		}
-		
+
 		double slope=IOUtils::nodata;
 		if (cfg.keyExists(pre+"SLOPE", "INPUT")) cfg.getValue(pre+"SLOPE", "INPUT", slope);
 		else cfg.getValue(dflt+"SLOPE", "INPUT", slope, IOUtils::nothrow);
@@ -488,24 +489,24 @@ void CsvIO::parseInputOutputSection()
 		if (cfg.keyExists(pre+"AZIMUTH", "INPUT")) cfg.getValue(pre+"AZIMUTH", "INPUT", azimuth);
 		else cfg.getValue(dflt+"AZIMUTH", "INPUT", azimuth, IOUtils::nothrow);
 		tmp_csv.setSlope(slope, azimuth);
-		
+
 		std::string csv_nodata;
 		if (cfg.keyExists(pre+"NODATA", "Input")) cfg.getValue(pre+"NODATA", "Input", csv_nodata);
 		else cfg.getValue(dflt+"NODATA", "Input", csv_nodata, IOUtils::nothrow);
 		tmp_csv.setNodata( csv_nodata );
-		
+
 		std::string delim_spec(","); //default delimiter
 		if (cfg.keyExists(pre+"DELIMITER", "Input")) cfg.getValue(pre+"DELIMITER", "Input", delim_spec);
 		else cfg.getValue(dflt+"DELIMITER", "Input", delim_spec, IOUtils::nothrow);
 		tmp_csv.setDelimiter(delim_spec);
-		
+
 		std::string PurgeCharsSpecs;
 		if (cfg.keyExists(pre+"PURGE_CHARS", "INPUT")) cfg.getValue(pre+"PURGE_CHARS", "INPUT", PurgeCharsSpecs);
 		else cfg.getValue(dflt+"PURGE_CHARS", "INPUT", PurgeCharsSpecs, IOUtils::nothrow);
 		if (!PurgeCharsSpecs.empty()) {
 			tmp_csv.setPurgeChars( PurgeCharsSpecs );
 		}
-		
+
 		char comments_mk='\n';
 		if (cfg.keyExists(pre+"COMMENTS_MK", "Input")) cfg.getValue(pre+"COMMENTS_MK", "Input", comments_mk);
 		else cfg.getValue(dflt+"COMMENTS_MK", "Input", comments_mk, IOUtils::nothrow);
@@ -524,50 +525,50 @@ void CsvIO::parseInputOutputSection()
 		if (cfg.keyExists(pre+"HEADER_REPEAT_MK", "Input")) cfg.getValue(pre+"HEADER_REPEAT_MK", "Input", hdr_repeat_mk);
 		else cfg.getValue(dflt+"HEADER_REPEAT_MK", "Input", hdr_repeat_mk, IOUtils::nothrow);
 		tmp_csv.setHeaderRepeatMk(hdr_repeat_mk);
-		
+
 		if (cfg.keyExists(pre+"NR_HEADERS", "Input")) cfg.getValue(pre+"NR_HEADERS", "Input", tmp_csv.header_lines);
 		else cfg.getValue(dflt+"NR_HEADERS", "Input", tmp_csv.header_lines, IOUtils::nothrow);
-		
+
 		if (cfg.keyExists(pre+"COLUMNS_HEADERS", "Input")) cfg.getValue(pre+"COLUMNS_HEADERS", "Input", tmp_csv.columns_headers);
 		else cfg.getValue(dflt+"COLUMNS_HEADERS", "Input", tmp_csv.columns_headers, IOUtils::nothrow);
 		if (tmp_csv.columns_headers>tmp_csv.header_lines) tmp_csv.columns_headers = IOUtils::npos;
-		
+
 		if (cfg.keyExists(pre+"FIELDS", "Input")) cfg.getValue(pre+"FIELDS", "Input", tmp_csv.csv_fields);
 		else cfg.getValue(dflt+"FIELDS", "Input", tmp_csv.csv_fields, IOUtils::nothrow);
-		
+
 		if (cfg.keyExists(pre+"FIELDS_POSTFIX", "Input")) cfg.getValue(pre+"FIELDS_POSTFIX", "Input", tmp_csv.fields_postfix);
 		else cfg.getValue(dflt+"FIELDS_POSTFIX", "Input", tmp_csv.fields_postfix, IOUtils::nothrow);
-		
+
 		if (cfg.keyExists(pre+"NUMBER_FIELDS", "Input")) cfg.getValue(pre+"NUMBER_FIELDS", "Input", tmp_csv.number_fields);
 		else cfg.getValue(dflt+"NUMBER_FIELDS", "Input", tmp_csv.number_fields, IOUtils::nothrow);
-		
+
 		if (cfg.keyExists(pre+"FILTER_ID", "Input")) cfg.getValue(pre+"FILTER_ID", "Input", tmp_csv.filter_ID);
 		else cfg.getValue(dflt+"FILTER_ID", "Input", tmp_csv.filter_ID, IOUtils::nothrow);
-		
+
 		std::string skipFieldSpecs;
 		if (cfg.keyExists(pre+"SKIP_FIELDS", "Input")) cfg.getValue(pre+"SKIP_FIELDS", "Input", skipFieldSpecs);
 		else cfg.getValue(dflt+"SKIP_FIELDS", "Input", skipFieldSpecs, IOUtils::nothrow);
 		if (!skipFieldSpecs.empty()) tmp_csv.setSkipFields( skipFieldSpecs, false );
-		
+
 		std::string onlyFieldSpecs;
 		if (cfg.keyExists(pre+"ONLY_FIELDS", "Input")) cfg.getValue(pre+"ONLY_FIELDS", "Input", onlyFieldSpecs);
 		else cfg.getValue(dflt+"ONLY_FIELDS", "Input", onlyFieldSpecs, IOUtils::nothrow);
 		if (!onlyFieldSpecs.empty()) tmp_csv.setSkipFields( onlyFieldSpecs, true );
-		
+
 		if (cfg.keyExists(pre+"UNITS_HEADERS", "Input")) cfg.getValue(pre+"UNITS_HEADERS", "Input", tmp_csv.units_headers);
 		else cfg.getValue(dflt+"UNITS_HEADERS", "Input", tmp_csv.units_headers, IOUtils::nothrow);
-		
+
 		if (cfg.keyExists(pre+"UNITS_OFFSET", "Input")) cfg.getValue(pre+"UNITS_OFFSET", "Input", tmp_csv.field_offset);
 		else cfg.getValue(dflt+"UNITS_OFFSET", "Input", tmp_csv.field_offset, IOUtils::nothrow);
-		
+
 		if (cfg.keyExists(pre+"UNITS_MULTIPLIER", "Input")) cfg.getValue(pre+"UNITS_MULTIPLIER", "Input", tmp_csv.field_multiplier);
 		else cfg.getValue(dflt+"UNITS_MULTIPLIER", "Input", tmp_csv.field_multiplier, IOUtils::nothrow);
-		
+
 		std::string csv_units;
 		if (cfg.keyExists(pre+"UNITS", "Input")) cfg.getValue(pre+"UNITS", "Input", csv_units);
 		else cfg.getValue(dflt+"UNITS", "Input", csv_units, IOUtils::nothrow);
 		if (!csv_units.empty()) tmp_csv.setUnits( csv_units );
-		
+
 		//Date and time formats. The defaults will be set when parsing the column names (so they are appropriate for the available columns)
 		std::string datetime_spec, date_spec, time_spec, decimaldate_type;
 		if (cfg.keyExists(pre+"DECIMALDATE_TYPE", "Input")) cfg.getValue(pre+"DECIMALDATE_TYPE", "Input", decimaldate_type);
@@ -581,7 +582,7 @@ void CsvIO::parseInputOutputSection()
 			cfg.getValue(dflt+"TIME_SPEC", "Input", time_spec, IOUtils::nothrow);
 		}
 		tmp_csv.setDateTimeSpecs(datetime_spec, date_spec, time_spec, decimaldate_type);
-		
+
 		int fixed_year=IOUtils::inodata;
 		int fixed_hour=IOUtils::inodata;
 		if (cfg.keyExists(pre+"FALLBACK_YEAR", "Input")) cfg.getValue(pre+"FALLBACK_YEAR", "Input", fixed_year);
@@ -603,32 +604,42 @@ void CsvIO::parseInputOutputSection()
 		std::vector<std::string> vecMetaSpec;
 		if (cfg.keyExists(pre+"SPECIAL_HEADERS", "Input")) cfg.getValue(pre+"SPECIAL_HEADERS", "Input", vecMetaSpec);
 		else cfg.getValue(dflt+"SPECIAL_HEADERS", "Input", vecMetaSpec, IOUtils::nothrow);
-		
+
 		//handling of lines restrictions (either as ONLY or EXCLUDE statements)
 		std::string linesExclusionsSpecs;
 		if (cfg.keyExists(pre+"EXCLUDE_LINES", "INPUT")) cfg.getValue(pre+"EXCLUDE_LINES", "INPUT", linesExclusionsSpecs);
 		else cfg.getValue(dflt+"EXCLUDE_LINES", "INPUT", linesExclusionsSpecs, IOUtils::nothrow);
-		
+
 		std::string linesRestrictionsSpecs;
 		if (cfg.keyExists(pre+"ONLY_LINES", "INPUT")) cfg.getValue(pre+"ONLY_LINES", "INPUT", linesRestrictionsSpecs);
 		else cfg.getValue(dflt+"ONLY_LINES", "INPUT", linesRestrictionsSpecs, IOUtils::nothrow);
-		
+
 		if (!linesExclusionsSpecs.empty() || !linesRestrictionsSpecs.empty()) {
-			if (!linesExclusionsSpecs.empty() && !linesRestrictionsSpecs.empty()) 
+			if (!linesExclusionsSpecs.empty() && !linesRestrictionsSpecs.empty())
 				throw InvalidArgumentException("It is not possible to provide both CSV_EXCLUDE_LINES and CSV_ONLY_LINES", AT);
 			if (!linesExclusionsSpecs.empty()) {
-				const std::vector< LinesRange > lrRange( initLinesRestrictions(linesExclusionsSpecs, "INPUT::CSV_EXCLUDE_LINES", false) );
+				const std::vector< LinesRange > lrRange( LinesRange::getLinesRestrictions(linesExclusionsSpecs, "INPUT::CSV_EXCLUDE_LINES", false) );
 				tmp_csv.setLinesExclusions( lrRange );
 			} else {
-				const std::vector< LinesRange > lrRange( initLinesRestrictions(linesRestrictionsSpecs, "INPUT::CSV_ONLY_LINES", true) );
+				const std::vector< LinesRange > lrRange( LinesRange::getLinesRestrictions(linesRestrictionsSpecs, "INPUT::CSV_ONLY_LINES", true) );
 				tmp_csv.setLinesExclusions( lrRange );
 			}
 		}
-		
+
+		//handling of mute warnings lines
+		std::string muteWarningsSpecs;
+		if (cfg.keyExists(pre+"MUTE_WARNINGS", "INPUT")) cfg.getValue(pre+"MUTE_WARNINGS", "INPUT", muteWarningsSpecs);
+		else cfg.getValue(dflt+"MUTE_WARNINGS", "INPUT", muteWarningsSpecs, IOUtils::nothrow);
+
+		if (!muteWarningsSpecs.empty()) {
+			const std::vector< LinesRange > lrRange( LinesRange::getLinesRestrictions(muteWarningsSpecs, "INPUT::CSV_MUTE_WARNINGS", false) );
+			tmp_csv.setMuteWarningsLines( lrRange );
+		}
+
 		std::string filename_spec;
 		if (cfg.keyExists(pre+"FILENAME_SPEC", "Input")) cfg.getValue(pre+"FILENAME_SPEC", "Input", filename_spec);
 		else cfg.getValue(dflt+"FILENAME_SPEC", "Input", filename_spec, IOUtils::nothrow);
-		
+
 		tmp_csv.setFile(meteopath + "/" + vecFilenames[ii].second, vecMetaSpec, filename_spec, idx);
 		csvparam.push_back( tmp_csv );
 	}
@@ -645,7 +656,7 @@ void CsvIO::readStationData(const Date& /*date*/, std::vector<StationData>& vecS
 MeteoData CsvIO::createTemplate(const CsvParameters& params)
 {
 	const size_t nr_of_data_fields = params.csv_fields.size(); //this has been checked by CsvParameters
-	
+
 	//build MeteoData template
 	MeteoData template_md( Date(0., 0.), params.getStation() );
 	for (size_t ii=0; ii<nr_of_data_fields; ii++) {
@@ -685,14 +696,14 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 		const std::string msg( "in file '"+filename+"', the declared units_offset ("+IOUtils::toString(params.units_offset.size())+") / units_multiplier ("+IOUtils::toString(params.units_multiplier.size())+") must match the number of columns ("+IOUtils::toString(nr_of_data_fields)+") in the file!" );
 		throw InvalidFormatException(msg, AT);
 	}
-	
+
 	const bool use_field_offset = !params.field_offset.empty();
 	const bool use_field_multiplier = !params.field_multiplier.empty();
 	if ((use_field_offset && params.field_offset.size()!=nr_of_data_fields) || (use_field_multiplier && params.field_multiplier.size()!=nr_of_data_fields)) {
 		const std::string msg( "in file '"+filename+"', the declared field_offset ("+IOUtils::toString(params.field_offset.size())+") / field_multiplier ("+IOUtils::toString(params.field_multiplier.size())+") must match the number of columns ("+IOUtils::toString(nr_of_data_fields)+") in the file!" );
 		throw InvalidFormatException(msg, AT);
 	}
-	
+
 	const MeteoData template_md( createTemplate(params) );
 
 	//now open the file
@@ -705,7 +716,7 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 		ss << " Please check file existence and permissions!";
 		throw AccessException(ss.str(), AT);
 	}
-	
+
 	std::string line;
 	size_t linenr=0;
 	streampos fpointer = indexer_map[filename].getIndex(dateStart, linenr);
@@ -717,7 +728,7 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 		FileUtils::skipLines(fin, skip_count);
 		linenr += skip_count;
 	}
-	
+
 	//and now, read the data and fill the vector vecMeteo
 	std::vector<MeteoData> vecMeteo;
 	std::vector<std::string> tmp_vec;
@@ -731,9 +742,9 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 	while (!fin.eof()){
 		getline(fin, line, params.eoln);
 		linenr++;
-		
+
 		if (has_exclusions && params.excludeLine( linenr, has_exclusions )) continue;
-		
+
 		if (comments_mk!='\n') IOUtils::stripComments(line, comments_mk);
 		if (purgeChars) params.purgeChars(line);
 		IOUtils::trim( line );
@@ -743,10 +754,10 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 			linenr += params.header_lines;
 			continue;
 		}
-		
+
 		const size_t nr_curr_data_fields = (delimIsNoWS)? IOUtils::readLineToVec(line, tmp_vec, params.csv_delim) : IOUtils::readLineToVec(line, tmp_vec);
 		if (nr_of_data_fields==0) nr_of_data_fields = nr_curr_data_fields;
-		
+
 		//filter on ID
 		if (params.ID_col!=IOUtils::npos) {
 			if (tmp_vec.size()<=params.ID_col) { //we can not filter on the ID although it has been requested so we have to stop!
@@ -755,10 +766,10 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 				ss << linenr << " :\n'" << line << "'\n";
 				throw InvalidFormatException(ss.str(), AT);
 			}
-			
+
 			if (tmp_vec[params.ID_col]!=filterID) continue;
 		}
-		
+
 		//check that we have the expected number of fields
 		if (nr_curr_data_fields!=nr_of_data_fields) {
 			std::ostringstream ss;
@@ -773,9 +784,9 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 		const Date dt( getDate(params, tmp_vec, silent_errors, filename, linenr) );
 		if (dt.isUndef() && silent_errors) continue;
 		if (!prev_dt.isUndef()) {
-			if (dt==prev_dt)
+			if (dt==prev_dt && !params.isMutedLine(linenr))
 				std::cerr << "[W] File \'" << filename << "\' has duplicated timestamps for " << dt.toString(Date::ISO) << " at line " << linenr << "\n";
-			if (dt<prev_dt)
+			if (dt<prev_dt && !params.isMutedLine(linenr))
 				std::cerr << "[W] File \'" << filename << "\' has out of order timestamps for " << dt.toString(Date::ISO) << " at line " << linenr << "\n";
 		}
 		prev_dt = dt;
@@ -791,14 +802,14 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 			if (dt<dateStart) break;
 			if (dt>dateEnd) continue;
 		}
-		
+
 		MeteoData md(template_md);
 		md.setDate(dt);
 		bool no_errors = true;
 		for (size_t ii=0; ii<tmp_vec.size(); ii++) {
 			if (params.skipField( ii )) continue; //the user has requested this field to be skipped or this is a special field
 			if (params.isNodata( tmp_vec[ii] )) continue; //recognize nodata
-			
+
 			double tmp;
 			if (!IOUtils::convertString(tmp, tmp_vec[ii])) {
 				const std::string err_msg( "Could not parse field '"+tmp_vec[ii]+"' in file \'"+filename+"' at line "+IOUtils::toString(linenr) );
@@ -810,21 +821,21 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 					tmp = IOUtils::nodata;
 				} else throw InvalidFormatException(err_msg, AT);
 			}
-			
+
 			if (tmp!=IOUtils::nodata) {
 				if (use_unit_multiplier) tmp *= params.units_multiplier[ii];
 				if (use_unit_offset) tmp += params.units_offset[ii];
 				if (use_field_multiplier) tmp *= params.field_multiplier[ii];
 				if (use_field_offset) tmp += params.field_offset[ii];
 			}
-			
+
 			md( params.csv_fields[ii] ) = tmp;
 		}
 		if (no_errors) vecMeteo.push_back( md );
 	}
 
 	if (!params.asc_order) std::reverse(vecMeteo.begin(), vecMeteo.end());
-	
+
 	return vecMeteo;
 }
 
@@ -836,7 +847,7 @@ void CsvIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 	for (size_t ii=0; ii<csvparam.size(); ii++) { //loop over CSV files
 		if (!csvparam[ii].hasDates(dateStart, dateEnd)) continue;
-		
+
 		const std::vector<MeteoData> tmpVec( readCSVFile(csvparam[ii], dateStart, dateEnd) );
 		if (tmpVec.empty()) continue;
 		const std::string tmpID( tmpVec.front().getStationID() );

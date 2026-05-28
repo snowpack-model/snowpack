@@ -593,6 +593,7 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 	errno = 0;
 
 	if (acdd.enableNcML()) acdd.writeNcML( filename );
+	if (acdd.enableJson()) acdd.writeJson( filename );
 
 	bool write_headers = false;
 	ios_base::openmode mode_flags = ios::binary; //read as binary to avoid eol mess

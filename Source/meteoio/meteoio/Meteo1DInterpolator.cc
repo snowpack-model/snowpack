@@ -59,13 +59,22 @@ static bool checkDeprecatedWindowSize(const Config &cfg)
 	return false;
 }
 
+static void checkDeprecatedKeySyntax(const mio::Config& cfg, const std::string& parname, const std::string& algo_name, const std::string& interpol_section)
+{
+	if (cfg.keyExistsRegex(parname + "::" + algo_name +".*", interpol_section)) {
+		std::stringstream ss;
+		ss << "Using deprecated interpolation algorithm syntax " << parname << "::" << algo_name << " in section " << interpol_section << std::endl;
+		ss << "Please use the new syntax " << parname << "::" << "ARG#" << std::endl;
+		ss << "For detailed information, see the documentation: https://meteoio.slf.ch/doc-release/html/resampling.html" << std::endl;
+		throw IOException(ss.str(), AT);
+	}
+}
+
 Meteo1DInterpolator::Meteo1DInterpolator(const Config &in_cfg, const char &rank, const IOUtils::OperationMode &mode)
-    : mapAlgorithms(), cfg(in_cfg), max_gap_size(86400.), enable_resampling(true), data_qa_logs(false), gap_size_key("MAX_GAP_SIZE")
+    : mapAlgorithms(), cfg(in_cfg), max_gap_size(86400.), enable_resampling(true), data_qa(cfg), gap_size_key("MAX_GAP_SIZE")
 {
 
 	if (checkDeprecatedWindowSize(cfg)) gap_size_key = "WINDOW_SIZE";
-
-	cfg.getValue("DATA_QA_LOGS", "GENERAL", data_qa_logs, IOUtils::nothrow);
 	cfg.getValue("ENABLE_RESAMPLING", "Interpolations1D", enable_resampling, IOUtils::nothrow);
 
 	// default max_gap_size is 2 julian days
@@ -123,30 +132,6 @@ void Meteo1DInterpolator::createResamplingStacks(const IOUtils::OperationMode &m
 	}
 }
 
-static void checkDeprecatedKeySyntax(const mio::Config& cfg, const std::string& parname, const std::string& algo_name, const std::string& interpol_section)
-{
-	if (cfg.keyExistsRegex(parname + "::" + algo_name +".*", interpol_section)) {
-		std::stringstream ss;
-		ss << "Using deprecated interpolation algorithm syntax " << parname << "::" << algo_name << " in section " << interpol_section << std::endl;
-		ss << "Please use the new syntax " << parname << "::" << "ARG#" << std::endl;
-		ss << "For detailed information, see the documentation: https://meteoio.slf.ch/doc-release/html/resampling.html" << std::endl;
-		throw IOException(ss.str(), AT);
-	}
-}
-
-
-void Meteo1DInterpolator::addAlgorithmToStack(const std::string& parname,const std::string& algo_name, const std::vector<std::pair<std::string, std::string>>& vecArgs, const double& i_max_gap_size)
-{
-	const std::shared_ptr<ResamplingAlgorithms> algo_ptr( ResamplingAlgorithmsFactory::getAlgorithm(algo_name, parname, i_max_gap_size, vecArgs, cfg) );
-	mapAlgorithms[parname].addAlgorithm(algo_ptr, i_max_gap_size);
-}
-
-void Meteo1DInterpolator::createDefaultAlgorithm(const std::string &parname)
-{
-	std::vector<std::pair<std::string, std::string>> vecArgs; // is empty anyways as we already iterated through all specified algorithms
-	addAlgorithmToStack(parname, "LINEAR", vecArgs, max_gap_size);
-}
-
 void Meteo1DInterpolator::processAlgorithms(const std::string &parname, const std::vector<std::pair<int, std::string>> &vecAlgos, std::string base_parname,
 											const IOUtils::OperationMode &mode, const char &rank)
 {
@@ -174,15 +159,15 @@ void Meteo1DInterpolator::processAlgorithms(const std::string &parname, const st
 			// handle accumulation algorithm
 			const std::string vstations_refresh_rate = cfg.get("VSTATIONS_REFRESH_RATE", "InputEditing");
 			const std::vector<std::pair<std::string, std::string>> vecArgs(1, std::make_pair("PERIOD", vstations_refresh_rate));
-			addAlgorithmToStack(parname, algo_name, vecArgs, max_gap_size_override);
+			mapAlgorithms[parname].addAlgorithmToStack(parname, algo_name, vecArgs, max_gap_size_override, cfg);
 		} else {
 			std::vector<std::pair<std::string, std::string>> vecArgs(cfg.getArgumentsForAlgorithm(base_parname, arguments_ini_key, algo_index));
 			eraseArg(vecArgs, gap_size_key);
-			addAlgorithmToStack(parname, algo_name, vecArgs, max_gap_size_override);
+			mapAlgorithms[parname].addAlgorithmToStack(parname, algo_name, vecArgs, max_gap_size_override, cfg);
 		}
 	}
 	if (mapAlgorithms[parname].empty()) { // create a default linear algorithm
-		createDefaultAlgorithm(parname);
+		mapAlgorithms[parname].createDefaultAlgorithm(parname, max_gap_size, cfg);
 	}
 }
 
@@ -241,6 +226,8 @@ bool Meteo1DInterpolator::resampleData(const Date &date, const std::string &stat
 		const std::map<std::string, ResamplingStack>::const_iterator it = mapAlgorithms.find(parname);
 		if (it != mapAlgorithms.end()) { // the parameter has been found
 			it->second.resample(stationHash, index, elementpos, ii, vecM, md, max_gap_size);
+			//TODO return the index of the algorithm that was used within ResamplingStack and have a call for each algo that returns its name
+			//so we could have this info for a more informative dataQA output
 
 		} else { // we are dealing with an extra parameter, we need to add it to the map first, so it will exist next time...
 			// all parameters with height will end up here.
@@ -249,8 +236,8 @@ bool Meteo1DInterpolator::resampleData(const Date &date, const std::string &stat
 				base_parname = parname;
 			}
 
-			const std::vector<std::pair<std::string, std::string>> vecAlgos(cfg.getValues(base_parname + interpol_pattern, interpol_section));
-			const std::vector<std::pair<int, std::string>> orderedAlgos(orderAlgoStack(vecAlgos));
+			const std::vector<std::pair<std::string, std::string>> vecAlgos( cfg.getValues(base_parname + interpol_pattern, interpol_section) );
+			const std::vector<std::pair<int, std::string>> orderedAlgos( orderAlgoStack(vecAlgos) );
 			mapAlgorithms[parname] = ResamplingStack();
 
 			// TODO: we need base name here
@@ -260,13 +247,12 @@ bool Meteo1DInterpolator::resampleData(const Date &date, const std::string &stat
 
 		if ((index != IOUtils::npos) && vecM[index](ii) != md(ii)) {
 			md.setResampledParam(ii);
-			if (data_qa_logs) {
+			if (data_qa.isEnabled()) {
 				const std::map<std::string, ResamplingStack>::const_iterator it2 = mapAlgorithms.find(parname); // we have to re-find it in order to handle extra parameters
-				const std::string statName(md.meta.getStationName());
-				const std::string statID(md.meta.getStationID());
-				const std::string stat( (!statID.empty()) ? statID : statName );
+				const std::string statID( md.meta.getStationID() );
+				const std::string stat( (!statID.empty()) ? statID : md.meta.getStationName() );
 				const std::string algo_name(it2->second.getStackStr());
-				std::cout << "[DATA_QA] Resampling " << stat << "::" << parname << "::" << algo_name << " " << md.date.toString(Date::ISO_TZ) << " [" << md.date.toString(Date::ISO_WEEK) << "]\n";
+				data_qa.printQA(DataQA::RESAMPLING, stat, parname, algo_name, md.date);
 			}
 		}
 	} // endfor ii
@@ -282,20 +268,13 @@ void Meteo1DInterpolator::resetResampling()
 	}
 }
 
-std::string Meteo1DInterpolator::getAlgorithmsForParameter(const std::string &parname) const
-{
-	std::string algo("linear"); // default value
-	cfg.getValue(parname + "::resample", "Interpolations1D", algo, IOUtils::nothrow);
-	return algo;
-}
-
 Meteo1DInterpolator &Meteo1DInterpolator::operator=(const Meteo1DInterpolator &source)
 {
 	if (this != &source) {
 		mapAlgorithms = source.mapAlgorithms;
 		max_gap_size = source.max_gap_size;
 		enable_resampling = source.enable_resampling;
-		data_qa_logs = source.data_qa_logs;
+		data_qa = source.data_qa;
 	}
 	return *this;
 }
@@ -317,70 +296,6 @@ const std::string Meteo1DInterpolator::toString() const
 	}
 	os << "</Meteo1DInterpolator>\n";
 
-	return os.str();
-}
-
-// --------------------- Resampling Stack Implementation --------------------------------------
-ResamplingStack::ResamplingStack() : max_gap_sizes(), stack() {}
-
-void ResamplingStack::addAlgorithm(std::shared_ptr<ResamplingAlgorithms> algo, const double &max_gap_size) {
-	stack.push_back(algo);
-	max_gap_sizes.push_back(max_gap_size);
-}
-
-std::vector<std::shared_ptr<ResamplingAlgorithms>> ResamplingStack::buildStack(const ResamplingAlgorithms::gap_info &gap) const
-{
-	std::vector<std::shared_ptr<ResamplingAlgorithms>> res;
-	for (size_t ii = 0; ii < stack.size(); ii++) {
-		if (max_gap_sizes[ii] == IOUtils::nodata)
-			res.push_back(stack[ii]);
-		else if (gap.size() <= max_gap_sizes[ii]) {
-			res.push_back(stack[ii]);
-		}
-	}
-	return res;
-}
-
-void ResamplingStack::resetResampling()
-{
-	for (size_t ii = 0; ii < stack.size(); ii++) {
-		stack[ii]->resetResampling();
-	}
-}
-
-//TODO The current implementation is not efficient as well as does not handle excat matches properly.
-//We should build once and for all the resampling stack (for every parameter) in the constructor
-//(consider having a '*' parameter as default for parameters that have not been explicitly configured)
-//and then just loop over the resampling algos with the gap that we have, asking who can take care of it.
-//Thus each specific algo could recognize an exact match and handle it...
-void ResamplingStack::resample(const std::string &stationHash, const size_t &index, const ResamplingAlgorithms::ResamplingPosition elementpos, const size_t &par_idx, const std::vector<MeteoData> &vecM,
-                                MeteoData &md, const double &i_max_gap_size) const
-{
-	const ResamplingAlgorithms::gap_info gap( ResamplingAlgorithms::findGap(index, par_idx, vecM, md.date, i_max_gap_size) );
-	const std::vector<std::shared_ptr<ResamplingAlgorithms>> resampling_stack = buildStack(gap);
-
-	for (size_t jj = 0; jj < resampling_stack.size(); jj++) {
-		resampling_stack[jj]->resample(stationHash, index, elementpos, par_idx, vecM, md);
-		if (jj > 0 && (index != IOUtils::npos) && vecM[index](par_idx) != md(par_idx)) {
-			break;
-		} else if (ResamplingAlgorithms::exact_match == elementpos && vecM[index](par_idx) == md(par_idx)) {
-			break;
-		}
-	}
-}
-
-bool ResamplingStack::empty() const { return stack.empty(); }
-
-std::string ResamplingStack::getStackStr() const
-{
-	ostringstream os;
-	os << "[";
-	for (size_t ii = 0; ii < stack.size(); ii++) {
-		os << stack[ii]->getAlgo();
-		if (ii < stack.size() - 1)
-			os << ", ";
-	}
-	os << "]";
 	return os.str();
 }
 

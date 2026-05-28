@@ -19,15 +19,15 @@
 */
 /**
  * @file Laws_sn.cc
- * @version 11.06
- * @brief This module contains (ALL) the constitutive laws for the 1d snowpack model \n
- * @par SnLaws is currently a merely static class (all functions and all variables are static members).
- *   In order to initialize the static member variables they are defined below and if dependent
- *   on the VARIANT in use initialized in setStaticData(const& std::string variant). This
- *   function also initializes static containers (swa_k, swa_fb, swa_pc). When calling
- *   compAlbedo(...) or compSnowViscosity(...) setStaticData might be called in case that
- *   the VARIANT has changed, thus some static variables may be adapted at runtime to the
- *   VARIANT specified.
+ * @brief This module contains (ALL) the constitutive laws for the 1d snowpack model
+ * @details
+ * SnLaws is currently a merely static class (all functions and all variables are static members).
+ * In order to initialize the static member variables they are defined below and if dependent
+ * on the VARIANT in use initialized in setStaticData(const& std::string variant). This
+ * function also initializes static containers (swa_k, swa_fb, swa_pc). When calling
+ * compAlbedo(...) or compSnowViscosity(...) setStaticData might be called in case that
+ * the VARIANT has changed, thus some static variables may be adapted at runtime to the
+ * VARIANT specified.
  *
  * This includes Michael Lehning's ALBEDO law as well as Bob Brown's VISCOSITY and HEAT CONDUCTION models.
  * It also contains the SENSIBLE and LATENT heat CONVECTION coefficients.  Moreover, this code
@@ -1243,19 +1243,19 @@ double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
 /**
  * @name New snow density
  * @brief Computes the density of new snow. The options for HN_DENSITY are:
- * - PARAMETERIZED (default is LEHNING_NEW):
- * 	- ZWART: Costijn Zwart's model (elaborated 2006; in use since 4 Dec 2007)
- * 	- LEHNING_NEW: Improved model by M. Lehning, incl. ad-hoc wind & temperature effects (used until 06/07)
- * 	- LEHNING_OLD: First model by M. Lehning
+ *  - PARAMETERIZED (default is LEHNING_NEW):
+ *  - ZWART: Costijn Zwart's model (elaborated 2006; in use since 4 Dec 2007)
+ *  - LEHNING_NEW: Improved model by M. Lehning, incl. ad-hoc wind & temperature effects (used until 06/07)
+ *  - LEHNING_OLD: First model by M. Lehning
  *  - JORDY: JORDY model by J. Hendrikx (2017) for wind speeds > 2.9 m/s (uses LEHNING_NEW below 2.9 m/s)
- * 	- BELLAIRE: Sascha Bellaire's model (elaborated 2007; used summer/fall 2007)
- * 	- PAHAUT: Edmond Pahaut's model, introduced Sep 1995 in CROCUS by G. Giraud
+ *  - BELLAIRE: Sascha Bellaire's model (elaborated 2007; used summer/fall 2007)
+ *  - PAHAUT: Edmond Pahaut's model, introduced Sep 1995 in CROCUS by G. Giraud
  *  - VANKAMPENHOUT: van Kampenhout et al. (2017): https://doi.org/10.1002/2017MS000988 , developed for firn in antartica
- * - EVENT: Driven by event type, that is,
- * 	- event_wind: Implemented 2009 by Christine Groot Zwaaftink for Antarctic variant
- * - MEASURED: Use measured new snow density read from meteo input
- * 	-Note: Set HN_DENSITY_FIXEDVALUE to 1. to use surface snow density as a "measured" value in case of missing values
- * - FIXED: Use a fixed new snow density by assigning HN_DENSITY_FIXEDVALUE a value (default: 100 kg m-3, at least min_hn_density)
+ *  - EVENT: Driven by event type, that is,
+ *  - event_wind: Implemented 2009 by Christine Groot Zwaaftink for Antarctic variant
+ *  - MEASURED: Use measured new snow density read from meteo input
+ *    (Note: Set HN_DENSITY_FIXEDVALUE to 1. to use surface snow density as a "measured" value in case of missing values)
+ *  - FIXED: Use a fixed new snow density by assigning HN_DENSITY_FIXEDVALUE a value (default: 100 kg m-3, at least min_hn_density)
  * @param i_hn_density type of density computation
  * @param i_hn_density_parameterization to use
  * @param i_hn_density_fixedValue to use
@@ -1733,9 +1733,11 @@ double SnLaws::AirEmissivity(mio::MeteoData& md, const std::string& variant)
  * In any case, the returned air emissivity will be between min_air_emissivity and 1,
  * min_air_emissivity depending on the variant. It returns min_air_emissivity if ta==nodata
  * or ilwr==nodata
- * @param ilwr incoming long wave radiation (W/m^2)
- * @param ta air temperature (K)
- * @param variant variant to use for the minimum allowed air emissivity
+ * @param[in] ilwr incoming long wave radiation (W/m^2)
+ * @param[in] ta air temperature (K)
+ * @param[in] variant variant to use for the minimum allowed air emissivity
+ * @param[in] max_limit enforce an emissivity between 0 and 1? (default: true)
+ *
  * @note observed minimum air emissivities:
  * 	- default: 0.55 (from 1993 data at Weissfluhjoch)
  * 	- Antarctica: 0.31 (from 2006/2007 data of Dome C)

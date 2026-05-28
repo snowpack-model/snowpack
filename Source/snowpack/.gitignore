@@ -10,6 +10,10 @@ install_manifest.txt
 **/cmake_uninstall.cmake
 **/Makefile
 *build/
+sandbox/
+**/*iconset*/
+/tools/*.plist
+**/.nfs*
 
 #generated files
 /doc/html/*
@@ -18,20 +22,22 @@ lib/*
 /bin/*
 *.aux
 *.log
+*.logs
+compile_commands.json
 Testing
 CTest*
 Dart*
-.vscode/
-.DS_store
-compile_commands.json
-
-#example files and binaries:
-/doc/examples/output/*
+.DS_Store
+**/.DS_Store
+snowpack/icons/snowpack.rc
+snowpack.cbp
+snowpack.layout
 
 #editor files:
 *.swp
 tags
 **/*~
+.vscode/
 .cache/
 
 #profiling:
@@ -47,10 +53,12 @@ CPackSourceConfig.cmake
 *.exe
 *.dmg
 
-#Mac OS
-*.DS_Store
+#example files and binaries:
+/doc/examples/output/*
 
-#Tests
+#Ctest generated files
+*CTestTestfile.cmake
+*DartConfiguration.tcl
 tests/albedo/albedoTest
 tests/implicitsolver/implicitsolverTest
 tests/linearsolver/linearsolverTest

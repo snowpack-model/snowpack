@@ -705,7 +705,7 @@ void Metamorphism::metamorphismDEFAULT(const CurrentMeteo& Mdata, SnowStation& X
 				EMS[e].mk += 2;  // grains become fully rounded
 			}
 			// An ice layer forms in the snowpack for dry densities above 700 kg m-3!
-			if ((EMS[e].theta[ICE] > 0.763) && marker % 10 != 7 && marker % 10 != 8 ) {
+			if ((EMS[e].theta[ICE] > (700. / Constants::density_ice)) && marker % 10 != 7 && marker % 10 != 8 ) {
 				EMS[e].mk = (EMS[e].mk / 10) * 10 + 8;
 			}
 		}
@@ -995,7 +995,7 @@ void Metamorphism::metamorphismNIED(const CurrentMeteo& Mdata, SnowStation& Xdat
 				EMS[e].mk += 2;  // grains become fully rounded
 			}
 			// An ice layer forms for dry densities above 700 kg m-3!
-			if ((EMS[e].theta[ICE] > 0.763) && ((marker % 10 != 7) || (marker % 10 != 8))) {
+			if ((EMS[e].theta[ICE] > (700. / Constants::density_ice)) && ((marker % 10 != 7) || (marker % 10 != 8))) {
 				EMS[e].mk = (EMS[e].mk / 10) * 10 + 8;
 			}
 		}

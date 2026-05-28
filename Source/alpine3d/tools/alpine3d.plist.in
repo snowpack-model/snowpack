@@ -23,7 +23,7 @@
 	<key>CFBundleGetInfoString</key>
 	<string>@CPACK_PACKAGE_NAME@ @_versionString@</string>
 	<key>CFBundleIconFile</key>
-	<string>Snowpack</string>
+	<string>Alpine3D</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.education</string>
 	<key>LSRequiresNativeExecution</key>
