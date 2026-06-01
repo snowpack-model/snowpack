@@ -2,7 +2,7 @@
  *  SNOWPACK stand-alone
  *
  *  Copyright WSL Institute for Snow and Avalanche Research SLF, DAVOS, SWITZERLAND
-*/
+ */
 /*  This file is part of Snowpack.
     Snowpack is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,6 +17,7 @@
     You should have received a copy of the GNU General Public License
     along with Snowpack.  If not, see <http://www.gnu.org/licenses/>.
 */
+
 #include <snowpack/libsnowpack.h>
 #include <meteoio/MeteoIO.h>
 
@@ -24,8 +25,6 @@
 #include <string>
 #include <sstream>
 #include <ctime>
-
-#include <regex>
 
 #ifdef _MSC_VER
 	/*
@@ -52,52 +51,6 @@ using namespace mio;
 	#include <fenv.h>
 #endif
 
-
-/**
- * @class Slope a C. Fierz class ;-)
- */
-class Slope {
-
-	public:
-		Slope(const mio::Config& cfg);
-
-		double prevailing_wind_dir;
-		unsigned int nSlopes;
-		unsigned int mainStation;  ///< main station, flat field or slope
-		unsigned int sector;       ///< main station (0) or current slope sector (1:nSlopes)
-		unsigned int first;        ///< first virtual slope station in computing sequence
-		unsigned int luv;
-		unsigned int lee;
-		bool north, south;
-		std::string snow_erosion;
-		bool mainStationDriftIndex;
-		bool snow_redistribution, luvDriftIndex;
-
-		unsigned int getSectorDir(const double& dir_or_expo) const;
-		void setSlope(const unsigned int slope_sequence, vector<SnowStation>& vecXdata, double& wind_dir);
-
-	private:
-		double sector_width;       ///< width of slope sector: 360./std::max((unsigned)1, nSlopes-1) deg
-};
-
-/**
- * @class Cumsum a C. Fierz class ;-)
- * To cumulate various mass fluxes over either hazard or time series time steps
- */
-class Cumsum {
-
-	public:
-		Cumsum(const unsigned int nSlopes);
-
-		double precip;
-		double drift, snow, runoff, rain;
-		double dhs_corr, mass_corr; // inflate/deflate variables
-		vector<double> erosion; // Cumulated eroded mass; dumped to file as rate
-		vector<double> erosion_length; // Cumulated eroded length
-		vector<double> redeposition; // Cumulated eroded mass
-		vector<double> redeposition_length; // Cumulated redeposited length
-};
-
 /************************************************************
  * static section                                           *
  ************************************************************/
@@ -109,105 +62,9 @@ static bool restart = false;
 static mio::Date dateBegin, dateEnd;
 static vector<string> vecStationIDs;
 
-/// @brief Main control parameters
-struct MainControl
-{
-	size_t nStep;        ///< Time step number
-	size_t nAvg;         ///< Number of calculation time steps to average fluxes etc.
-	size_t HzStep;       ///< Hazard step number (should be half of nStep in operational mode)
-	bool   TsDump;       ///< Flag for time series dump
-	bool   HzDump;       ///< Calculation of hazard information will be performed
-	bool   PrDump;       ///< Flag for profile dump
-	bool   XdataDump;    ///< Backup of Xdata will be performed
-	bool   sdbDump;      ///< Dump to data base if required in operational mode
-	bool   resFirstDump; ///< Flag to dump initial state of snowpack
-};
-
 /************************************************************
  * non-static section                                       *
  ************************************************************/
-
-Slope::Slope(const mio::Config& cfg)
-       : prevailing_wind_dir(0.), nSlopes(0), mainStation(0), sector(0),
-         first(1), luv(0), lee(0),
-         north(false), south(false),
-         snow_erosion("NONE"), mainStationDriftIndex(false),
-         snow_redistribution(false), luvDriftIndex(false),
-         sector_width(0)
-{
-	cfg.getValue("NUMBER_SLOPES", "SnowpackAdvanced", nSlopes);
-	cfg.getValue("SNOW_EROSION", "SnowpackAdvanced", snow_erosion);
-	std::transform(snow_erosion.begin(), snow_erosion.end(), snow_erosion.begin(), ::toupper);	// Force upper case
-	stringstream ss;
-	ss << "" << nSlopes;
-	cfg.getValue("SNOW_REDISTRIBUTION", "SnowpackAdvanced", snow_redistribution);
-	if (snow_redistribution && !(nSlopes > 1 && nSlopes % 2 == 1))
-		throw mio::IOException("Please set NUMBER_SLOPES to 3, 5, 7, or 9 with SNOW_REDISTRIBUTION set! (nSlopes="+ss.str()+")", AT);
-	cfg.getValue("PREVAILING_WIND_DIR", "SnowpackAdvanced", prevailing_wind_dir, mio::IOUtils::nothrow);
-	sector_width = 360. / static_cast<double>(std::max((unsigned)1, nSlopes-1));
-}
-
-/**
- * @brief Determine either direction of blowing wind or slope exposition.
- * NOTE that station slope.first always corresponds to the prevailing wind direction
- * @param dir_or_expo direction of wind or exposition
- **/
-unsigned int Slope::getSectorDir(const double& dir_or_expo) const
-{
-	double dir = dir_or_expo;
-	if (dir > 360.) dir -= 360.;
-	else if (dir < 0.) dir += 360.;
-	const unsigned int sectorDir = (unsigned int)((floor((dir + 0.5*sector_width)/sector_width)) + 1);
-	if (sectorDir >= nSlopes) return 1;
-	else return sectorDir;
-}
-
-/**
- * @brief Set slope variables
- * @param slope_sequence computation sequence for slopes
- * @param vecXdata
- * @param wind_dir direction of wind
- **/
-void Slope::setSlope(const unsigned int slope_sequence, vector<SnowStation>& vecXdata, double& wind_dir)
-{
-	mainStationDriftIndex = false;
-	luvDriftIndex = false;
-	switch (slope_sequence) {
-	case 0:
-		for (size_t kk=0; kk<nSlopes; kk++) {
-			vecXdata[kk].windward = false;
-			vecXdata[kk].rho_hn   = 0.;
-			vecXdata[kk].hn       = 0.;
-		}
-		if (nSlopes > 1) {
-			luv = getSectorDir(wind_dir - prevailing_wind_dir);
-			vecXdata[luv].windward = true;
-			lee = (luv + nSlopes/2) % (nSlopes-1);
-			if (lee == 0) lee = nSlopes - 1;
-		} else {
-			//requesting slope 0 of 0 expositions
-			luv = lee = 0;
-		}
-		sector = mainStation;
-		mainStationDriftIndex = ((nSlopes == 1));
-		break;
-	case 1:
-		sector = luv;
-		luvDriftIndex = true;
-		break;
-	default:
-		sector++;
-		if (sector == nSlopes) sector = 1;
-	}
-	north = (vecXdata[sector].meta.getSlopeAngle() > 0. && vecXdata[sector].meta.getAzimuth() == 0.);
-	south = (vecXdata[sector].meta.getSlopeAngle() > 0. && vecXdata[sector].meta.getAzimuth() == 180.);
-}
-
-Cumsum::Cumsum(const unsigned int nSlopes)
-        : precip(0.),
-          drift(0.), snow(0.), runoff(0.), rain(0.), dhs_corr(0.), mass_corr(0.),
-          erosion(nSlopes, 0.), erosion_length(nSlopes, 0.), redeposition(nSlopes, 0.), redeposition_length(nSlopes, 0.)
-{}
 
 inline void Version()
 {
@@ -239,6 +96,33 @@ inline void Usage(const string& programname)
 	cout << "Example: " << programname << " -c io.ini -e 1996-06-17T00:00\n\n";
 }
 
+inline void printStartInfo(const SnowpackConfig& cfg, const std::string& name)
+{
+	const bool useSoilLayers = cfg.get("SNP_SOIL", "Snowpack");
+	if (useSoilLayers) {
+		bool soil_flux = false;
+		cfg.getValue("SOIL_FLUX", "Snowpack", soil_flux);
+		prn_msg(__FILE__, __LINE__, "msg",  mio::Date(), "Start SNOWPACK w/ soil layers in %s mode", mode.c_str());
+	} else {
+		prn_msg(__FILE__, __LINE__, "msg",  mio::Date(), "Start SNOWPACK in %s mode", mode.c_str());
+	}
+
+	const std::string variant = cfg.get("VARIANT", "SnowpackAdvanced");
+	if (variant != "DEFAULT") {
+		prn_msg(__FILE__, __LINE__, "msg",  mio::Date(), "Variant is '%s'", variant.c_str());
+	}
+	prn_msg(__FILE__, __LINE__, "msg-", mio::Date(),
+	        "%s compiled on %s at %s", name.c_str(), __DATE__, __TIME__);
+
+	if (mode != "OPERATIONAL") {
+		const std::string experiment = cfg.get("EXPERIMENT", "Output");
+		const std::string outpath = cfg.get("METEOPATH", "Output");
+		prn_msg(__FILE__, __LINE__, "msg-", mio::Date(), "Experiment : %s", experiment.c_str());
+		prn_msg(__FILE__, __LINE__, "msg-", mio::Date(), "Output dir : %s", outpath.c_str());
+	}
+}
+
+//the dates can not be parsed into a Date object because we don't have an INI file yet, so we don't know the time zone...
 inline void parseCmdLine(int argc, char **argv, string& begin_date_str, string& end_date_str)
 {
 	int longindex=0, opt=-1;
@@ -321,407 +205,6 @@ inline void parseCmdLine(int argc, char **argv, string& begin_date_str, string& 
 	}
 }
 
-inline void editMeteoData(mio::MeteoData& md, const string& variant, const double& thresh_rain)
-{ //HACK: these should be handled by DataGenerators
-	if (md(MeteoData::PSUM_PH)==IOUtils::nodata) {
-		const double ta = md(MeteoData::TA);
-		if (ta!=IOUtils::nodata)
-			md(MeteoData::PSUM_PH) = (ta>=IOUtils::C_TO_K(thresh_rain))? 1. : 0.; //fallback: simple temp threshold
-	}
-
-	//Add the atmospheric emissivity as a parameter
-	if (!md.param_exists("EA")) {
-		md.addParameter("EA");
-		md("EA") = SnLaws::AirEmissivity(md, variant);
-	}
-	// Snow stations without separate wind station use their own wind for local drifting and blowing snow
-	if (!md.param_exists("VW_DRIFT")) md.addParameter("VW_DRIFT");
-	if (md("VW_DRIFT") == mio::IOUtils::nodata)
-		md("VW_DRIFT") = md(MeteoData::VW);
-	if (!md.param_exists("DW_DRIFT")) md.addParameter("DW_DRIFT");
-	if (md("DW_DRIFT") == mio::IOUtils::nodata)
-		md("DW_DRIFT") = md(MeteoData::DW);
-}
-
-// Return true if snowpack can compute the next timestep, else false
-inline bool validMeteoData(const mio::MeteoData& md, const string& StationName, const string& variant, const bool& enforce_snow_height, const bool& advective_heat, const bool& soil_flux, const unsigned int& nslopes)
-{
-	bool miss_ta=false, miss_tsg=false, miss_rh=false, miss_precip=false, miss_splitting=false, miss_hs=false;
-	bool miss_rad=false, miss_ea=false, miss_wind=false, miss_drift=false, miss_adv=false;
-
-	if (md(MeteoData::TA) == mio::IOUtils::nodata)
-		miss_ta=true;
-	if (soil_flux==false && md(MeteoData::TSG) == mio::IOUtils::nodata)
-		miss_tsg=true;
-	if (md(MeteoData::RH) == mio::IOUtils::nodata)
-		miss_rh=true;
-	if ((variant != "ANTARCTICA")
-	        && ((md(MeteoData::ISWR) == mio::IOUtils::nodata) && (md(MeteoData::RSWR) == mio::IOUtils::nodata))) {
-		if (md.param_exists("NET_SW") && md("NET_SW")!=mio::IOUtils::nodata) miss_rad=false; //net shortwave must be called NET_SW
-		else miss_rad=true;
-	}
-	if (enforce_snow_height && (md(MeteoData::HS) == mio::IOUtils::nodata))
-		miss_hs=true;
-	if (!enforce_snow_height && (md(MeteoData::PSUM) == mio::IOUtils::nodata) )
-		miss_precip=true;
-	if (!enforce_snow_height && (md(MeteoData::PSUM_PH) == mio::IOUtils::nodata) )
-		miss_splitting=true;
-	if (md("EA") == mio::IOUtils::nodata)
-		miss_ea=true;
-	if (md(MeteoData::VW) ==mio::IOUtils::nodata)
-		miss_wind=true;
-	if (nslopes>1 && (md("DW_DRIFT")==mio::IOUtils::nodata || md("VW_DRIFT")==mio::IOUtils::nodata))
-		miss_drift=true;
-	if (advective_heat && md("ADV_HEAT")==mio::IOUtils::nodata)
-		miss_adv=true;
-
-	if (miss_ta || miss_tsg || miss_rh || miss_rad || miss_precip || miss_splitting || miss_hs || miss_ea || miss_wind || miss_drift || miss_adv) {
-		mio::Date now;
-		now.setFromSys();
-		cerr << "[E] [" << now.toString(mio::Date::ISO) << "] ";
-		cerr << StationName << " missing { ";
-		if (miss_ta) cerr << "TA ";
-		if (miss_tsg) cerr << "TSG ";
-		if (miss_rh) cerr << "RH ";
-		if (miss_rad) cerr << "sw_radiation ";
-		if (miss_hs) cerr << "HS ";
-		if (miss_precip) cerr << "precipitation ";
-		if (miss_splitting) cerr << "precip_splitting ";
-		if (miss_ea) cerr << "lw_radiation ";
-		if (miss_wind) cerr << "VW ";
-		if (miss_drift) cerr << "drift ";
-		if (miss_adv) cerr << "adv_heat ";
-		cerr << "} on " << md.date.toString(mio::Date::ISO) << "\n";
-		return false;
-	}
-	return true;
-}
-
-inline void copyMeteoData(const mio::MeteoData& md, CurrentMeteo& Mdata,
-                   const double& prevailing_wind_dir, const double& wind_scaling_factor, bool &iswr_is_net)
-{
-	Mdata.date   = Date::rnd(md.date, 1);
-	Mdata.ta     = md(MeteoData::TA);
-	Mdata.rh     = md(MeteoData::RH);
-	if (md.param_exists("RH_AVG"))
-		Mdata.rh_avg = md("RH_AVG");
-	Mdata.vw     = md(MeteoData::VW);
-	Mdata.dw     = md(MeteoData::DW);
-	Mdata.vw_max = md(MeteoData::VW_MAX);
-	if (md.param_exists("VW_AVG"))
-		Mdata.vw_avg = md("VW_AVG");
-
-	Mdata.vw_drift = md("VW_DRIFT");
-	if (Mdata.vw_drift != mio::IOUtils::nodata) Mdata.vw_drift *= wind_scaling_factor;
-	Mdata.dw_drift = md("DW_DRIFT");
-	if (Mdata.dw_drift == mio::IOUtils::nodata) Mdata.dw_drift = prevailing_wind_dir;
-
-	Mdata.iswr   = md(MeteoData::ISWR);
-	Mdata.rswr   = md(MeteoData::RSWR);
-
-	//if ea was parametrized in SnLaws::AirEmissivity without either TAU_CLD or ISWR, it is of bad quality
-	Mdata.ea  = md("EA");
-	if (md(MeteoData::ILWR)!=IOUtils::nodata || md(MeteoData::TAU_CLD)!=IOUtils::nodata || md(MeteoData::ISWR)!=IOUtils::nodata) {
-		Mdata.poor_ea = false;
-	} else {
-		Mdata.poor_ea = true;
-	}
-
-	if (md.param_exists("NET_LW")) {
-		Mdata.ea = 1.;
-		Mdata.poor_ea = false;
-		Mdata.lw_net = md("NET_LW");
-	} else {
-		Mdata.lw_net = IOUtils::nodata;
-	}
-	Mdata.tss = md(MeteoData::TSS);
-	if (md.param_exists("TSS_A12H") && (md("TSS_A12H") != mio::IOUtils::nodata))
-		Mdata.tss_a12h = md("TSS_A12H");
-	else
-		Mdata.tss_a12h = Constants::undefined;
-	if (md.param_exists("TSS_A24H") && (md("TSS_A24H") != mio::IOUtils::nodata))
-		Mdata.tss_a24h = md("TSS_A24H");
-	else
-		Mdata.tss_a24h = Constants::undefined;
-	Mdata.ts0 = md(MeteoData::TSG);
-
-	Mdata.psum_ph = md(MeteoData::PSUM_PH);
-	Mdata.psum = md(MeteoData::PSUM);
-	if (md.param_exists("PSUM_TECH"))
-		Mdata.psum_tech = md("PSUM_TECH");
-	else
-		Mdata.psum_tech = Constants::undefined;
-
-	Mdata.hs = md(MeteoData::HS);
-	if (md.param_exists("HS_A3H") && (md("HS_A3H") != mio::IOUtils::nodata))
-		Mdata.hs_a3h = md("HS_A3H");
-	else
-		Mdata.hs_a3h = Constants::undefined;
-
-	// Add measured new snow density if available
-	if (md.param_exists("RHO_HN"))
-		Mdata.rho_hn = md("RHO_HN");
-
-	// Add geo_heat if available
-	if(md.param_exists("GEO_HEAT"))
-		Mdata.geo_heat = md("GEO_HEAT");
-	else
-		Mdata.geo_heat = mio::IOUtils::nodata;
-
-	// Add advective heat (for permafrost) if available
-	if (md.param_exists("ADV_HEAT"))
-		Mdata.adv_heat = md("ADV_HEAT");
-
-	// Temporarly copy Net_SW to iswr, the real iswr/rswr will be computed in setShortWave()
-	if (md.param_exists("NET_SW")) {
-		Mdata.iswr = md("NET_SW");
-		iswr_is_net = true;
-	}
-
-	// Add massbal parameters (surface snow melt, snow drift, sublimation), all mass fluxes in kg m-2 CALCULATION_STEP_LENGTH-1
-	if(md.param_exists("SMELT"))
-		Mdata.surf_melt = md("SMELT");
-	else
-		Mdata.surf_melt = mio::IOUtils::nodata;
-	if(md.param_exists("SNOWD"))
-		Mdata.snowdrift = md("SNOWD");
-	else
-		Mdata.snowdrift = mio::IOUtils::nodata;
-	if(md.param_exists("SUBLI"))
-		Mdata.sublim = md("SUBLI");
-	else
-		Mdata.sublim = mio::IOUtils::nodata;
-
-	//Add atmospheric optical depth and atmospheric pressure parameters
-	if(md.param_exists("ODC"))
-		Mdata.odc = md("ODC");
-	else
-		Mdata.odc = mio::IOUtils::nodata;
-	if(md.param_exists("P"))
-		Mdata.p = md("P");
-	else
-		Mdata.p = mio::IOUtils::nodata;
-}
-
-inline double getHS_last3hours(mio::IOManager &io, const mio::Date& current_date)
-{
-	std::vector<mio::MeteoData> MyMeteol3h;
-
-	try {
-		io.getMeteoData(current_date - 3.0/24.0, MyMeteol3h);  // meteo data with 3 h (left) lag
-	} catch (...) {
-		cerr << "[E] failed to read meteo data with 3 hours (left) lag\n";
-		throw;
-	}
-
-	if (MyMeteol3h[0].param_exists("HS_A3H") && (MyMeteol3h[0]("HS_A3H") != mio::IOUtils::nodata))
-		return MyMeteol3h[0]("HS_A3H");
-	else
-		return Constants::undefined;
-}
-
-/**
- * @brief Make sure that both short wave fluxes get at least a "realistic" value but measured albedo only if both fluxes are measured
- * @note To be done only for flat field or single slope station
- * @param Mdata
- * @param Xdata
- * @param slope
- */
-inline void setShortWave(CurrentMeteo& Mdata, const SnowStation& Xdata, const bool& iswr_is_net)
-{
-	if ((Mdata.iswr > 5.) && (Mdata.rswr > 3.) && !iswr_is_net)
-		Mdata.mAlbedo = Mdata.rswr / Mdata.iswr;
-	else
-		Mdata.mAlbedo = Constants::undefined;
-
-	if (iswr_is_net) {
-		const double netSW = Mdata.iswr;
-		if(netSW==0.) { //this should only happen at night
-			Mdata.iswr = 0.;
-			Mdata.rswr = 0.;
-			return;
-		}
-		const double cAlbedo = Xdata.Albedo;
-		Mdata.iswr = netSW / (1. - cAlbedo);
-		Mdata.rswr = netSW / (1./cAlbedo - 1.);
-		return;
-	}
-
-	if (Mdata.iswr == mio::IOUtils::nodata)
-		Mdata.iswr = Mdata.rswr / Xdata.Albedo;
-	if (Mdata.rswr == mio::IOUtils::nodata)
-		Mdata.rswr = Mdata.iswr * Xdata.Albedo;
-}
-
-//for a given config (that can be altered) and original meteo data, prepare the snowpack data structures
-//This means that all tweaking of config MUST be reflected in the config object
-inline void dataForCurrentTimeStep(CurrentMeteo& Mdata, SurfaceFluxes& surfFluxes, vector<SnowStation>& vecXdata,
-                            const Slope& slope, SnowpackConfig& cfg,
-                            SunObject &sun,
-                            double& precip, const double& lw_in, const double hs_a3hl6,
-                            double& tot_mass_in,
-                            const std::string& variant, const bool& iswr_is_net, Meteo &meteo)
-{
-	SnowStation &currentSector = vecXdata[slope.sector]; //alias: the current station
-	const bool isMainStation = (slope.sector == slope.mainStation);
-	const bool useCanopyModel = cfg.get("CANOPY", "Snowpack");
-	const bool perp_to_slope = cfg.get("PERP_TO_SLOPE", "SnowpackAdvanced");
-	if (Mdata.tss == mio::IOUtils::nodata) {
-		cfg.addKey("MEAS_TSS", "Snowpack", "false");
-	}
-
-	// Reset Surface and Canopy Data to zero if you seek current values
-	const bool avgsum_time_series = cfg.get("AVGSUM_TIME_SERIES", "Output");
-	if (!avgsum_time_series) {
-		const bool cumsum_mass = cfg.get("CUMSUM_MASS", "Output");
-		surfFluxes.reset(cumsum_mass);
-		if (useCanopyModel)
-			currentSector.Cdata.reset(cumsum_mass);
-		if(!cumsum_mass) {
-			for(auto& station:vecXdata) {
-				station.reset_water_fluxes();
-			}
-		}
-		const bool mass_balance = cfg.get("MASS_BALANCE", "SnowpackAdvanced");
-		if (mass_balance) {
-			// Do an initial mass balance check
-			if (!massBalanceCheck(currentSector, surfFluxes, tot_mass_in))
-				prn_msg(__FILE__, __LINE__, "msg+", Mdata.date, "Mass error during initial check!");
-		}
-	}
-	// Reset surfFluxes.drift and surfFluxes.mass[MS_WIND] anyway since you use these to transport eroded snow
-	surfFluxes.drift = 0.;
-	surfFluxes.mass[SurfaceFluxes::MS_WIND] = 0.;
-
-	if (isMainStation) {
-		// Check for growing grass
-		if (!meteo.compHSrate(Mdata, currentSector, hs_a3hl6))
-			cfg.addKey("DETECT_GRASS", "SnowpackAdvanced", "false");
-
-		// Set iswr/rswr and measured albedo
-		setShortWave(Mdata, currentSector, iswr_is_net);
-		meteo.compRadiation(currentSector, sun, cfg, Mdata);
-	} else { // Virtual slope
-		cfg.addKey("CHANGE_BC", "Snowpack", "false");
-		cfg.addKey("MEAS_TSS", "Snowpack", "false");
-		Mdata.tss = Constants::undefined;
-		Mdata.lw_net = Constants::undefined;
-		cfg.addKey("ENFORCE_MEASURED_SNOW_HEIGHTS", "Snowpack", "true");
-		cfg.addKey("DETECT_GRASS", "SnowpackAdvanced", "false");
-	}
-
-	std::string sw_mode = cfg.get("SW_MODE", "Snowpack"); //it must be after calling compRadiation!
-
-	// Project irradiance on slope; take care of measured snow depth and/or precipitations too
-	if (!perp_to_slope) {
-		meteo.radiationOnSlope(currentSector, sun, Mdata, surfFluxes);
-		if ( ((sw_mode == "REFLECTED") || (sw_mode == "BOTH"))
-			&& (currentSector.meta.getSlopeAngle() > Constants::min_slope_angle)) { // Do not trust blindly measured RSWR on slopes
-			cfg.addKey("SW_MODE", "Snowpack", "INCOMING"); // as Mdata.iswr is the sum of dir_slope and diff
-		}
-		if (Mdata.psum != mio::IOUtils::nodata) {
-			meteo.projectPrecipitations(currentSector.meta.getSlopeAngle(), Mdata.psum, Mdata.hs);
-		}
-	}
-
-	// Check if ILWR can be derived from NET_LW and TSS
-	if (Mdata.lw_net != mio::IOUtils::nodata && Mdata.tss != mio::IOUtils::nodata) {
-		const double emmisivity = (vecXdata[slope.mainStation].getNumberOfElements() > vecXdata[slope.mainStation].SoilNode) ? Constants::emissivity_snow : vecXdata[slope.mainStation].SoilEmissivity;
-		const double ilwr = Mdata.lw_net + emmisivity * Constants::stefan_boltzmann * Optim::pow4(Mdata.tss);
-		Mdata.lw_net = IOUtils::nodata;
-		Mdata.ea = SnLaws::AirEmissivity(ilwr, Mdata.ta, variant);
-	}
-
-	bool adjust_height_of_wind_value;
-	cfg.getValue("ADJUST_HEIGHT_OF_WIND_VALUE", "SnowpackAdvanced", adjust_height_of_wind_value);
-	// Find the Wind Profile Parameters, w/ or w/o canopy; take care of canopy
-	meteo.compMeteo(Mdata, currentSector, true, adjust_height_of_wind_value);
-
-	if (isMainStation) {
-		// Update precipitation memory of main station
-		if (Mdata.psum != mio::IOUtils::nodata) {
-			precip += Mdata.psum;
-		}
-
-		if (Mdata.hs != mio::IOUtils::nodata) {
-			currentSector.mH = Mdata.hs + currentSector.Ground;
-		}
-	} else { // Virtual slope
-		currentSector.mH = Constants::undefined;
-
-		// A) Compute depth of snowfall (hn*) and new snow density (rho_hn*)
-		double hn_slope = 0., rho_hn_slope = SnLaws::min_hn_density;
-		if (vecXdata[slope.mainStation].hn > 0.) {
-			// Assign new snow depth and density from station field (usually flat)
-			hn_slope = vecXdata[slope.mainStation].hn * currentSector.cos_sl;
-			rho_hn_slope = vecXdata[slope.mainStation].rho_hn;
-		}
-		/*
-		 * Snow redistribution on slopes: Add windward eroded snow to lee slope
-		 * These are very important lines: Note that deposition is treated here (lee)
-		 * while erosion is treated in SnowDrift.c (windward).
-		*/
-		if (slope.snow_redistribution && (slope.sector == slope.lee)) {
-			// If it is not snowing, use surface snow density on windward slope
-			if (!(hn_slope > 0.)) {
-				rho_hn_slope = vecXdata[slope.luv].rho_hn;
-			}
-			// Add eroded mass from windward slope
-			if (rho_hn_slope != 0.) {
-				hn_slope += vecXdata[slope.luv].ErosionMass / rho_hn_slope;
-			}
-			vecXdata[slope.luv].ErosionMass = 0.;
-		}
-		// Update depth of snowfall on slopes.
-		// This may include contributions from drifting snow eroded on the windward (luv) slope.
-		if ((hn_slope > 0.) && (vecXdata[slope.mainStation].cH > 0.01)) {
-			currentSector.hn = hn_slope;
-			currentSector.rho_hn = rho_hn_slope;
-		}
-
-		// B) Check whether to use incoming longwave as estimated from station field
-		const bool meas_incoming_longwave = cfg.get("MEAS_INCOMING_LONGWAVE", "SnowpackAdvanced");
-		if (!meas_incoming_longwave && lw_in!=IOUtils::nodata) {
-			Mdata.ea = SnLaws::AirEmissivity(lw_in, Mdata.ta, variant, true); // In this case, lw_in is an estimate, and we enforce max limit on ea.
-		}
-	}
-}
-
-/**
- * @brief determine which outputs need to be done for the current time step
- * @param mn_ctrl timestep control structure
- * @param step current time integration step
- * @param sno_step current step in the sno files (current sno profile)
- */
-
-inline void getOutputControl(MainControl& mn_ctrl, const mio::Date& step, const mio::Date& sno_step,
-                      const double& calculation_step_length,
-                      const double& tsstart, const double& tsdaysbetween,
-                      const double& profstart, const double& profdaysbetween,
-                      const double& first_backup, const double& backup_days_between)
-{
-//HACK: put all tsstart, tsdaysbetween, etc in MainControl as well as current timestep
-	const double Dstep = step.getJulian();
-	const double Dsno_step = sno_step.getJulian();
-	if (mn_ctrl.resFirstDump) {
-		mn_ctrl.HzDump = false;
-		mn_ctrl.TsDump = true;
-		mn_ctrl.PrDump = true;
-		mn_ctrl.resFirstDump = false;
-	} else {
-		// Hazard data, every half-hour
-		mn_ctrl.HzDump = booleanTime(Dstep, 0.5/24., 0.0, calculation_step_length);
-		// Time series (*.met)
-		mn_ctrl.TsDump = booleanTime(Dstep, tsdaysbetween, ((tsstart > 0.) ? (tsstart + Dsno_step) : (0.)), calculation_step_length);
-		// Profile (*.pro)
-		mn_ctrl.PrDump = booleanTime(Dstep, profdaysbetween, ((profstart > 0.) ? (profstart + Dsno_step) : (0.)), calculation_step_length);
-	}
-
-	// Additional Xdata backup (*.<JulianDate>sno)
-	const double bool_start = Dsno_step + first_backup;
-	mn_ctrl.XdataDump = booleanTime(Dstep, backup_days_between, bool_start, calculation_step_length);
-}
-
 inline bool readSlopeMeta(mio::IOManager& io, SnowpackIO& snowpackio, SnowpackConfig& cfg, const size_t& i_stn,
                    Slope& slope, mio::Date &current_date, vector<SN_SNOWSOIL_DATA> &vecSSdata,
                    vector<SnowStation> &vecXdata, ZwischenData &sn_Zdata, CurrentMeteo& Mdata)
@@ -770,7 +253,7 @@ inline bool readSlopeMeta(mio::IOManager& io, SnowpackIO& snowpackio, SnowpackCo
 				}
 			} else {
 				std::stringstream sec_snowfile;
-				sec_snowfile << "" << snowfile << sector;
+				sec_snowfile << "" <<  snowfile << sector;
 				ss.str("");
 				ss << "" << vecSSdata[slope.mainStation].meta.getStationID() << sector;
 				snowpackio.readSnowCover(sec_snowfile.str(), ss.str(), vecSSdata[sector], sn_Zdata, (vecXdata[sector].Seaice!=NULL));
@@ -820,116 +303,6 @@ inline bool readSlopeMeta(mio::IOManager& io, SnowpackIO& snowpackio, SnowpackCo
 	return true;
 }
 
-inline void addSpecialKeys(SnowpackConfig &cfg)
-{
-	const std::string variant = cfg.get("VARIANT", "SnowpackAdvanced");
-
-	// Add keys to perform running mean in Antarctic variant
-	if (variant == "ANTARCTICA" || variant == "POLAR") {
-		cfg.addKey("*::edit999", "InputEditing", "COPY");
-		cfg.addKey("*::arg999::dest", "InputEditing", "VW_AVG");
-		cfg.addKey("*::arg999::src", "InputEditing", "VW");
-		cfg.addKey("*::edit998", "InputEditing", "COPY");
-		cfg.addKey("*::arg998::dest", "InputEditing", "RH_AVG");
-		cfg.addKey("*::arg998::src", "InputEditing", "RH");
-
-		cfg.addKey("VW_AVG::filter1", "Filters", "AGGREGATE");
-		cfg.addKey("VW_AVG::arg1::type", "Filters", "MEAN");
-		cfg.addKey("VW_AVG::arg1::soft", "Filters", "true");
-		cfg.addKey("VW_AVG::arg1::min_pts", "Filters", "101");
-		cfg.addKey("VW_AVG::arg1::min_span", "Filters", "360000");
-		cfg.addKey("RH_AVG::filter1", "Filters", "AGGREGATE");
-		cfg.addKey("RH_AVG::arg1::type", "Filters", "MEAN");
-		cfg.addKey("RH_AVG::arg1::soft", "Filters", "true");
-		cfg.addKey("RH_AVG::arg1::min_pts", "Filters", "101");
-		cfg.addKey("RH_AVG::arg1::min_span", "Filters", "360000");
-	}
-
-	const std::string tst_sw_mode = cfg.get("SW_MODE", "Snowpack"); // Test settings for SW_MODE
-	if (tst_sw_mode == "BOTH") { //HACK: this is only for INP!
-		// Make sure there is not only one of ISWR and RSWR available
-		bool iswr_inp=true, rswr_inp = true;
-		cfg.getValue("ISWR_INP","Input",iswr_inp,IOUtils::nothrow);
-		cfg.getValue("RSWR_INP","Input",rswr_inp,IOUtils::nothrow);
-		if (!(iswr_inp && rswr_inp)) {
-			cerr << "[E] SW_MODE = " << tst_sw_mode << ": Please set both ISWR_INP and RSWR_INP to true in [Input]-section of io.ini!\n";
-			exit(1);
-		}
-	}
-
-	const bool useCanopyModel = cfg.get("CANOPY", "Snowpack");
-	bool detect_grass = cfg.get("DETECT_GRASS", "SnowpackAdvanced");
-	if (mode == "OPERATIONAL") {
-		cfg.addKey("RESEARCH", "SnowpackAdvanced", "false");
-		cfg.addKey("AVGSUM_TIME_SERIES", "Output", "false");
-		if (useCanopyModel) {
-			throw mio::IOException("Please don't set CANOPY to 1 in OPERATIONAL mode", AT);
-		}
-	}
-
-	if (detect_grass) {
-		// we need various average values of tss and hs, all for "past" windows (left)
-		// Require at least one value per 3 hours
-		cfg.addKey("*::edit899", "InputEditing", "COPY");
-		cfg.addKey("*::arg899::dest", "InputEditing", "TSS_A24H");
-		cfg.addKey("*::arg899::src", "InputEditing", "TSS");
-		cfg.addKey("TSS_A24H::filter1", "Filters", "AGGREGATE");
-		cfg.addKey("TSS_A24H::arg1::type", "Filters", "MEAN");
-		cfg.addKey("TSS_A24H::arg1::centering", "Filters", "left");
-		cfg.addKey("TSS_A24H::arg1::min_pts", "Filters", "48"); //TODO change # data required to 4
-		cfg.addKey("TSS_A24H::arg1::min_span", "Filters", "86340");
-
-		cfg.addKey("*::edit890", "InputEditing", "COPY");
-		cfg.addKey("*::arg890::dest", "InputEditing", "TSS_A12H");
-		cfg.addKey("*::arg890::src", "InputEditing", "TSS");
-		cfg.addKey("TSS_A12H::filter1", "Filters", "AGGREGATE");
-		cfg.addKey("TSS_A12H::arg1::type", "Filters", "MEAN");
-		cfg.addKey("TSS_A12H::arg1::centering", "Filters", "left");
-		cfg.addKey("TSS_A12H::arg1::min_pts", "Filters", "24"); //TODO change # data required to 2
-		cfg.addKey("TSS_A12H::arg1::min_span", "Filters", "43140");
-
-		cfg.addKey("*::edit880", "InputEditing", "COPY");
-		cfg.addKey("*::arg880::dest", "InputEditing", "HS_A3H");
-		cfg.addKey("*::arg880::src", "InputEditing", "HS");
-		cfg.addKey("HS_A3H::filter1", "Filters", "AGGREGATE");
-		cfg.addKey("HS_A3H::arg1::type", "Filters", "MEAN");
-		cfg.addKey("HS_A3H::arg1::centering", "Filters", "left");
-		cfg.addKey("HS_A3H::arg1::min_pts", "Filters", "6"); //TODO change # data required to 1
-		cfg.addKey("HS_A3H::arg1::min_span", "Filters", "10740");
-	}
-
-	//warn the user if the precipitation miss proper re-accumulation
-	const bool HS_driven = cfg.get("ENFORCE_MEASURED_SNOW_HEIGHTS", "Snowpack");
-	if (mode != "OPERATIONAL" && !HS_driven) {
-		int psum_resampling_index = IOUtils::inodata;
-		const std::vector<std::pair<std::string, std::string>> vecAlgos( cfg.getValues("PSUM::RESAMPLE", "Interpolations1D") );
-		for (const auto &key : vecAlgos) {
-			if (IOUtils::strToUpper(key.second) == "ACCUMULATE") {
-				std::regex pattern ("PSUM::RESAMPLE(\\d+)$", std::regex::icase);
-				std::smatch match;
-				if (std::regex_search(key.first, match, pattern)) { // first is the original key
-					psum_resampling_index = std::stoi(match[1]);
-					break;
-				} else {
-					throw IOException("ACCUMULATE key " + key.first + " does not contain a valid index; I.e. it does not match the pattern PARAM::resample#",AT);
-				}
-			}
-		}
-
-		if (psum_resampling_index == IOUtils::nodata) {
-			std::cerr << "[W] The precipitation should be re-accumulated over CALCULATION_STEP_LENGTH, not doing it is most probably an error!\n";
-		} else {
-			const double psum_accumulate = cfg.get("PSUM::arg"+std::to_string(psum_resampling_index)+"::period", "Interpolations1D");
-			const double sn_step_length = cfg.get("CALCULATION_STEP_LENGTH", "Snowpack");
-			if (sn_step_length*60. != psum_accumulate)
-				std::cerr << "[W] The precipitation should be re-accumulated over CALCULATION_STEP_LENGTH (currently, over " <<  psum_accumulate << "s)\n";
-		}
-	}
-	if (detect_grass && !HS_driven) {
-		throw mio::IOException("[E] DETECT_GRASS is TRUE while ENFORCE_MEASURED_SNOW_HEIGHTS is FALSE. Cannot continue simulation, because snow height is used to detect grass.", AT);
-	}
-}
-
 inline void writeForcing(Date d1, const Date& d2, const double& Tstep, IOManager &io)
 {
 	std::vector< std::vector<MeteoData> > vecMeteo;
@@ -956,71 +329,6 @@ inline void writeForcing(Date d1, const Date& d2, const double& Tstep, IOManager
 	prn_msg(__FILE__, __LINE__, "msg",  mio::Date(), "Forcing data written out");
 }
 
-inline void printStartInfo(const SnowpackConfig& cfg, const std::string& name)
-{
-	const bool useSoilLayers = cfg.get("SNP_SOIL", "Snowpack");
-	if (useSoilLayers) {
-		bool soil_flux = false;
-		cfg.getValue("SOIL_FLUX", "Snowpack", soil_flux);
-		prn_msg(__FILE__, __LINE__, "msg",  mio::Date(), "Start SNOWPACK w/ soil layers in %s mode", mode.c_str());
-	} else {
-		prn_msg(__FILE__, __LINE__, "msg",  mio::Date(), "Start SNOWPACK in %s mode", mode.c_str());
-	}
-
-	const std::string variant = cfg.get("VARIANT", "SnowpackAdvanced");
-	if (variant != "DEFAULT") {
-		prn_msg(__FILE__, __LINE__, "msg",  mio::Date(), "Variant is '%s'", variant.c_str());
-	}
-	prn_msg(__FILE__, __LINE__, "msg-", mio::Date(),
-	        "%s compiled on %s at %s", name.c_str(), __DATE__, __TIME__);
-
-	if (mode != "OPERATIONAL") {
-		const std::string experiment = cfg.get("EXPERIMENT", "Output");
-		const std::string outpath = cfg.get("METEOPATH", "Output");
-		prn_msg(__FILE__, __LINE__, "msg-", mio::Date(), "Experiment : %s", experiment.c_str());
-		prn_msg(__FILE__, __LINE__, "msg-", mio::Date(), "Output dir : %s", outpath.c_str());
-	}
-}
-
-/*
-* Snow depth and mass corrections (deflate-inflate):
-*   Monitor snow depth discrepancy assumed to be due to ...
-*   ... wrong settling, which in turn is assumed to be due to a wrong estimation ...
-*   of fresh snow mass because Michi spent many painful days calibrating the settling ...
-*   and therefore it can't be wrong, dixunt Michi and Charles.
-*/
-inline void deflateInflate(SnowStation &Xdata, vector<ProcessDat> &qr_Hdata, const CurrentMeteo &Mdata, const double &sn_dt, const size_t &i_hz, const bool &prn_check)
-{
-	if (Xdata.mH == IOUtils::nodata) {
-		cerr << "[E] No measured snow height: cannot execute ALLOW_INFLATE!" << endl;
-		throw;
-	}
-	const double cH = Xdata.cH - Xdata.Ground;
-	const double mH = Xdata.mH - Xdata.Ground;
-	// Look for missed erosion or not strong enough settling ...
-	// ... and nastily deep "dips" caused by buggy data ...
-	if (Xdata.TimeCountDeltaHS > -Constants::eps2) {
-		if ((mH + 0.01) < cH) {
-			Xdata.TimeCountDeltaHS += S_TO_D(sn_dt);
-		} else {
-			Xdata.TimeCountDeltaHS = 0.;
-		}
-	}
-	// ... or too strong settling
-	if (Xdata.TimeCountDeltaHS < Constants::eps2) {
-		if ((mH - 0.01) > cH) {
-			Xdata.TimeCountDeltaHS -= S_TO_D(sn_dt);
-		} else {
-			Xdata.TimeCountDeltaHS = 0.;
-		}
-	}
-	// If the error persisted for at least one day => apply correction
-	if (fabs(Xdata.TimeCountDeltaHS) > (1. - 0.05 * S_TO_D(sn_dt))) {
-		deflateInflate(Mdata, Xdata, qr_Hdata.at(i_hz).dhs_corr, qr_Hdata.at(i_hz).mass_corr, prn_check);
-		Xdata.TimeCountDeltaHS = 0.;
-	}
-}
-
 // SNOWPACK MAIN **************************************************************
 inline void real_main (int argc, char *argv[])
 {
@@ -1033,14 +341,14 @@ inline void real_main (int argc, char *argv[])
 	std::string begin_date_str, end_date_str;
 	parseCmdLine(argc, argv, begin_date_str, end_date_str);
 	SnowpackConfig cfg(cfgfile);
-	addSpecialKeys(cfg);
-	Meteo meteo(cfg);
+	cfg.checkStandaloneKeys(mode); //perform some consistency checks on the configuration
+	cfg.addStandaloneKeys(mode); //add special keys to run Snowpack standalone
 
 	mio::Timer meteoRead_timer;
 	mio::Timer run_timer;
 	run_timer.start();
 	time_t nowSRT = time(NULL);
-	MainControl mn_ctrl; //Time step control parameters
+	MainControl mn_ctrl(cfg); //Time step control parameters
 
 	const double i_time_zone = cfg.get("TIME_ZONE", "Input"); //get user provided input time_zone
 	if (!begin_date_str.empty()) {
@@ -1057,42 +365,22 @@ inline void real_main (int argc, char *argv[])
 	const std::string variant = cfg.get("VARIANT", "SnowpackAdvanced");
 	const std::string experiment = cfg.get("EXPERIMENT", "Output");
 	const std::string outpath = cfg.get("METEOPATH", "Output");
-	const bool useSoilLayers = cfg.get("SNP_SOIL", "Snowpack");
-	const bool useCanopyModel = cfg.get("CANOPY", "Snowpack");
-	const double calculation_step_length = cfg.get("CALCULATION_STEP_LENGTH", "Snowpack");
-	const double sn_dt = M_TO_S(calculation_step_length); //Calculation time step in seconds
 
 	int nSolutes = Constants::iundefined;
 	cfg.getValue("NUMBER_OF_SOLUTES", "Input", nSolutes, mio::IOUtils::nothrow);
 	if (nSolutes > 0) SnowStation::number_of_solutes = static_cast<short unsigned int>(nSolutes);
 
-	//Interval between profile backups (*.sno\<JulianDate\>) (d)
-	double backup_days_between = 400.;
-	cfg.getValue("SNOW_DAYS_BETWEEN", "Output", backup_days_between, mio::IOUtils::nothrow);
-	//First additional profile backup (*.sno\<JulianDate\>) since start of simulation (d)
-	double first_backup = 0.;
-	cfg.getValue("FIRST_BACKUP", "Output", first_backup, mio::IOUtils::nothrow);
-	bool label_snow = true;	// Initialize to true to be compliant with legacy SNOWPACK
-	cfg.getValue("LABEL_SNOW", "Output", label_snow, mio::IOUtils::nothrow);
-
-	const bool allow_inflate = cfg.get("INFLATE_ALLOW", "Snowpack", (mode == "OPERATIONAL"));
 	const bool prn_check = cfg.get("INFLATE_INFO", "Snowpack", false);
+	const double inflate_tracking_period = cfg.get("INFLATE_TRACKING_PERIOD", "Snowpack", 1.); // in days
 	const bool grooming = cfg.get("SNOW_GROOMING", "TechSnow");
 	const bool classify_profile = cfg.get("CLASSIFY_PROFILE", "Output");
 	const bool profwrite = cfg.get("PROF_WRITE", "Output");
-	const double profstart = cfg.get("PROF_START", "Output");
-	const double profdaysbetween = cfg.get("PROF_DAYS_BETWEEN", "Output");
 	const bool tswrite = cfg.get("TS_WRITE", "Output");
-	const double tsstart = cfg.get("TS_START", "Output");
-	const double tsdaysbetween = cfg.get("TS_DAYS_BETWEEN", "Output");
 	const bool snow_write = cfg.get("SNOW_WRITE", "Output");
 
 	const bool precip_rates = cfg.get("PRECIP_RATES", "Output");
 	const bool avgsum_time_series = cfg.get("AVGSUM_TIME_SERIES", "Output");
 	const bool cumsum_mass = cfg.get("CUMSUM_MASS", "Output");
-	const double thresh_rain = cfg.get("THRESH_RAIN", "SnowpackAdvanced"); //Rain only for air temperatures warmer than threshold (degC)
-	const bool advective_heat = cfg.get("ADVECTIVE_HEAT", "SnowpackAdvanced");
-	const bool soil_flux = cfg.get("SOIL_FLUX", "Snowpack");
 
 	//If the user provides the stationIDs - operational use case
 	if (!vecStationIDs.empty()) { //operational use case: stationIDs provided on the command line
@@ -1131,20 +419,18 @@ inline void real_main (int argc, char *argv[])
 
 		double lw_in = Constants::undefined;    // Storage for LWin from flat field energy balance
 
-		// Used to scale wind for blowing and drifting snowpack (from statistical analysis)
-		double wind_scaling_factor = cfg.get("WIND_SCALING_FACTOR", "SnowpackAdvanced");
-
 		// Snowpack data (input/output)
 		ZwischenData sn_Zdata;   // "Memory"-data, required for every operational station
 		vector<SN_SNOWSOIL_DATA> vecSSdata(slope.nSlopes, SN_SNOWSOIL_DATA(/*number_of_solutes*/));
 		vector<SnowStation> vecXdata;
 		for (size_t ii=0; ii<slope.nSlopes; ii++) { //fill vecXdata with *different* SnowStation objects
-			vecXdata.push_back( SnowStation(useCanopyModel, useSoilLayers, false /*Is A3d?*/, (variant=="SEAICE") ) );
+			vecXdata.push_back( SnowStation(cfg, false /*Is A3d?*/, (mode == "OPERATIONAL")) );
 			if (vecXdata.back().Seaice != NULL) vecXdata[ii].Seaice->ConfigSeaIce(cfg);
 		}
 
 		// Create meteo data object to hold interpolated current time steps
 		CurrentMeteo Mdata(cfg);
+		Meteo meteo(cfg);
 		// To collect surface exchange data for output
 		SurfaceFluxes surfFluxes/*(number_of_solutes)*/;
 		// Boundary condition (fluxes)
@@ -1158,11 +444,11 @@ inline void real_main (int argc, char *argv[])
 		meteoRead_timer.stop();
 		if (!read_slope_status) continue; //something went wrong, move to the next station
 
-		memset(&mn_ctrl, 0, sizeof(MainControl));
+		mn_ctrl.reset(); //values read from cfg are kept, others set back to 0 / false
 		if (mode == "RESEARCH") {
 			if (!restart) {
 				mn_ctrl.resFirstDump = true;  //HACK to dump the initial state in research mode
-				current_date -= calculation_step_length/(24.*60.); //Do a first time step to fill all output fields
+				current_date -= mn_ctrl.calculation_step_length/(24.*60.); //Do a first time step to fill all output fields
 			} else {
 				mn_ctrl.resFirstDump = false; //No initial state dump when doing a restart
 			}
@@ -1187,7 +473,7 @@ inline void real_main (int argc, char *argv[])
 		prn_msg(__FILE__, __LINE__, "msg-", mio::Date(), "End date specified by user: %s",
 		        dateEnd.toString(mio::Date::ISO_TZ).c_str());
 		prn_msg(__FILE__, __LINE__, "msg-", mio::Date(), "Integration step length: %f min",
-		        calculation_step_length);
+		        mn_ctrl.calculation_step_length);
 
 		bool computed_one_timestep = false;
 		double meteo_step_length = -1.;
@@ -1195,13 +481,13 @@ inline void real_main (int argc, char *argv[])
 
 		//from current_date to dateEnd, if necessary write out meteo forcing
 		if (write_forcing==true) {
-			writeForcing(current_date, dateEnd, calculation_step_length/1440, io);
+			writeForcing(current_date, dateEnd, mn_ctrl.calculation_step_length/1440, io);
 			write_forcing = false; //no need to call it again for the other stations
 		}
 
 		// START TIME INTEGRATION LOOP
 		do {
-			current_date += calculation_step_length/1440;
+			current_date += mn_ctrl.calculation_step_length/1440; //converting calculation_step_length in days
 			mn_ctrl.nStep++;
 			mn_ctrl.nAvg++;
 
@@ -1212,7 +498,7 @@ inline void real_main (int argc, char *argv[])
 			if (vecMyMeteo.empty()) {
 				prn_msg(__FILE__, __LINE__, "msg-", current_date, "No forcing data provided for [%s]",
 				        current_date.toString(mio::Date::ISO).c_str());
-				current_date -= calculation_step_length/1440;
+				current_date -= mn_ctrl.calculation_step_length/1440;
 				break;
 			}
 			if(meteo_step_length<0.) {
@@ -1222,21 +508,20 @@ inline void real_main (int argc, char *argv[])
 				cfg.addKey("METEO_STEP_LENGTH", "Snowpack", ss2.str());
 			}
 			meteoRead_timer.stop();
-			editMeteoData(vecMyMeteo[i_stn], variant, thresh_rain);
-			if (!validMeteoData(vecMyMeteo[i_stn], vecStationIDs[i_stn], variant, enforce_snow_height, advective_heat, soil_flux, slope.nSlopes)) {
+			Mdata.editMeteoData(vecMyMeteo[i_stn]);
+			if (!Mdata.validMeteoData(vecMyMeteo[i_stn], vecStationIDs[i_stn], slope.nSlopes)) {
 				prn_msg(__FILE__, __LINE__, "msg-", current_date, "No valid data for station %s on [%s]",
 				        vecStationIDs[i_stn].c_str(), current_date.toString(mio::Date::ISO).c_str());
-				current_date -= calculation_step_length/1440;
+				current_date -= mn_ctrl.calculation_step_length/1440;
 				break;
 			}
 
 			//determine which outputs will have to be done
-			getOutputControl(mn_ctrl, current_date, vecSSdata[slope.mainStation].profileDate, calculation_step_length,
-			                 tsstart, tsdaysbetween, profstart, profdaysbetween,
-			                 first_backup, backup_days_between);
+			mn_ctrl.getOutputControl(current_date, vecSSdata[slope.mainStation].profileDate);
+
 			//Radiation data
 			sun.setDate(current_date.getJulian(), current_date.getTimeZone());
-			const double hs_a3hl6 = getHS_last3hours(io, current_date);
+			const double hs_a3hl6 = Mdata.getHS_last3hours(io, current_date);
 
 			// START LOOP OVER ASPECTS
 			for (unsigned int slope_sequence=0; slope_sequence<slope.nSlopes; slope_sequence++) {
@@ -1244,14 +529,15 @@ inline void real_main (int argc, char *argv[])
 				SnowpackConfig tmpcfg(cfg);
 
 				//fill Snowpack internal structure with forcing data
-				bool iswr_is_net = false;
-				copyMeteoData(vecMyMeteo[i_stn], Mdata, slope.prevailing_wind_dir, wind_scaling_factor, iswr_is_net);
+				Mdata.setMeteoData(vecMyMeteo[i_stn], slope.prevailing_wind_dir);
 				Mdata.copySnowTemperatures(vecMyMeteo[i_stn], slope_sequence);
 				Mdata.copySolutes(vecMyMeteo[i_stn], SnowStation::number_of_solutes);
 				slope.setSlope(slope_sequence, vecXdata, Mdata.dw_drift);
-				dataForCurrentTimeStep(Mdata, surfFluxes, vecXdata, slope, tmpcfg,
-                                       sun, cumsum.precip, lw_in, hs_a3hl6,
-                                       tot_mass_in, variant, iswr_is_net, meteo);
+				Mdata.dataForCurrentTimeStep(surfFluxes, vecXdata, slope, tmpcfg,
+                                       sun, cumsum.precip, lw_in, hs_a3hl6, tot_mass_in);
+
+				// Find the Wind Profile Parameters, w/o canopy; take care of canopy
+				meteo.compMeteo(Mdata, vecXdata[slope.sector], true);
 
 				// Store ea from main slope to be used on the virtual slopes (in case it was modified in copyMeteoData or dataForCurrentTimeStep)
 				if (slope.sector == slope.mainStation) vecMyMeteo[i_stn]("EA") = Mdata.ea;
@@ -1259,7 +545,7 @@ inline void real_main (int argc, char *argv[])
 				// Notify user every fifteen days of date being processed
 				const double notify_start = floor(vecSSdata[slope.mainStation].profileDate.getJulian()) + 15.5;
 				if ((mode == "RESEARCH") && (slope.sector == slope.mainStation)
-				        && booleanTime(current_date.getJulian(), 15., notify_start, calculation_step_length)) {
+				        && booleanTime(current_date.getJulian(), 15., notify_start, mn_ctrl.calculation_step_length)) {
 					prn_msg(__FILE__, __LINE__, "msg", current_date,
 					            "Station %s (%d slope(s)): advanced to %s station time",
 					                vecSSdata[slope.mainStation].meta.stationID.c_str(), slope.nSlopes,
@@ -1329,8 +615,12 @@ inline void real_main (int argc, char *argv[])
 					}
 
 					//check if inflate-deflate is required and perform it if necessary
-					if (enforce_snow_height && allow_inflate)
-						deflateInflate(vecXdata[slope.mainStation], qr_Hdata, Mdata, sn_dt, i_hz, prn_check);
+					if (enforce_snow_height && vecXdata[slope.mainStation].allow_inflate) {
+						if (vecXdata[slope.mainStation].needDeflateInflate(mn_ctrl.sn_dt, inflate_tracking_period)) {
+							vecXdata[slope.mainStation].deflateInflate(Mdata, qr_Hdata.at(i_hz).dhs_corr, qr_Hdata.at(i_hz).mass_corr, prn_check);
+							vecXdata[slope.mainStation].TimeCountDeltaHS = 0.; //Time counter tracking erroneous settlement in operational mode
+						}
+					}
 
 					if (mn_ctrl.HzDump) { // Save hazard data ...
 						qr_Hdata.at(i_hz).stat_abbrev = vecStationIDs[i_stn];
@@ -1391,7 +681,7 @@ inline void real_main (int argc, char *argv[])
 				if (tswrite && mn_ctrl.TsDump) {
 					// Average fluxes
 					if (avgsum_time_series) {
-						averageFluxTimeSeries(mn_ctrl.nAvg, useCanopyModel, surfFluxes, vecXdata[slope.sector]);
+						averageFluxTimeSeries(mn_ctrl.nAvg, vecXdata[slope.sector].useCanopyModel, surfFluxes, vecXdata[slope.sector]);
 					} else {
 						surfFluxes.mass[SurfaceFluxes::MS_RAIN] = cumsum.rain;
 						surfFluxes.mass[SurfaceFluxes::MS_HNW] = cumsum.snow;
@@ -1401,18 +691,18 @@ inline void real_main (int argc, char *argv[])
 					}
 
 					if (precip_rates) { // Precip rates in kg m-2 h-1
-						surfFluxes.mass[SurfaceFluxes::MS_RAIN] /= static_cast<double>(mn_ctrl.nAvg)*M_TO_H(calculation_step_length);
-						surfFluxes.mass[SurfaceFluxes::MS_HNW] /= static_cast<double>(mn_ctrl.nAvg)*M_TO_H(calculation_step_length);
+						surfFluxes.mass[SurfaceFluxes::MS_RAIN] /= static_cast<double>(mn_ctrl.nAvg)*M_TO_H(mn_ctrl.calculation_step_length);
+						surfFluxes.mass[SurfaceFluxes::MS_HNW] /= static_cast<double>(mn_ctrl.nAvg)*M_TO_H(mn_ctrl.calculation_step_length);
 						if ((mode == "OPERATIONAL") && (!cumsum_mass)) {
 							surfFluxes.mass[SurfaceFluxes::MS_SNOWPACK_RUNOFF] = cumsum.runoff;
-							surfFluxes.mass[SurfaceFluxes::MS_SNOWPACK_RUNOFF] /= static_cast<double>(mn_ctrl.nAvg)*M_TO_H(calculation_step_length);
+							surfFluxes.mass[SurfaceFluxes::MS_SNOWPACK_RUNOFF] /= static_cast<double>(mn_ctrl.nAvg)*M_TO_H(mn_ctrl.calculation_step_length);
 							cumsum.runoff = 0.;
 						}
 					}
 
 					// Erosion mass rate in kg m-2 h-1
 					surfFluxes.mass[SurfaceFluxes::MS_WIND] = cumsum.erosion[slope.sector];
-					surfFluxes.mass[SurfaceFluxes::MS_WIND] /= static_cast<double>(mn_ctrl.nAvg)*M_TO_H(calculation_step_length);
+					surfFluxes.mass[SurfaceFluxes::MS_WIND] /= static_cast<double>(mn_ctrl.nAvg)*M_TO_H(mn_ctrl.calculation_step_length);
 
 					// REDEPOSIT mode variables:
 					if (cumsum.erosion_length[slope.sector] != 0. && cumsum.redeposition_length[slope.sector] != 0.) {
@@ -1437,7 +727,7 @@ inline void real_main (int argc, char *argv[])
 
 					if (avgsum_time_series) {
 						surfFluxes.reset(cumsum_mass);
-						if (useCanopyModel) vecXdata[slope.sector].Cdata.reset(cumsum_mass);
+						if (vecXdata[slope.sector].useCanopyModel) vecXdata[slope.sector].Cdata.reset(cumsum_mass);
 					}
 					surfFluxes.cRho_hn = Constants::undefined;
 					surfFluxes.mRho_hn = Constants::undefined;
@@ -1462,7 +752,7 @@ inline void real_main (int argc, char *argv[])
 					std::stringstream ss;
 					ss << "" << vecStationIDs[i_stn];
 					if (slope.sector != slope.mainStation) ss << "" << slope.sector;
-					snowpackio.writeSnowCover(current_date, vecXdata[slope.sector], sn_Zdata, (label_snow)?(2):(1));
+					snowpackio.writeSnowCover(current_date, vecXdata[slope.sector], sn_Zdata, (mn_ctrl.label_snow)?(2):(1));
 					prn_msg(__FILE__, __LINE__, "msg", current_date,
 					        "Backup Xdata dumped for station %s [%.2f days, step %d]", ss.str().c_str(),
 					        (current_date.getJulian()
@@ -1482,7 +772,7 @@ inline void real_main (int argc, char *argv[])
 				if (tswrite && mn_ctrl.TsDump) vecXdata[slope.sector].resetSlopeParFlux();
 			} //end loop on slopes
 			computed_one_timestep = true;
-		} while ((dateEnd.getJulian() - current_date.getJulian()) > calculation_step_length/(2.*1440));
+		} while ((dateEnd.getJulian() - current_date.getJulian()) > mn_ctrl.calculation_step_length/(2.*1440));
 		//end loop on timesteps
 
 		// If the simulation run for at least one time step,

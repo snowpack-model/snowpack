@@ -20,6 +20,8 @@
 
 #include <snowpack/SnowpackConfig.h>
 
+#include <regex>
+
 using namespace mio;
 using namespace std;
 
@@ -388,5 +390,134 @@ void SnowpackConfig::setDefaults()
 		// If not explicitly specified, take the default one (i.e., the one for matrix flow)
 		getValue("AVG_METHOD_HYDRAULIC_CONDUCTIVITY", "SnowpackAdvanced", tmp_avg_method_K);
 		addKey("AVG_METHOD_HYDRAULIC_CONDUCTIVITY_PREF_FLOW", "SnowpackAdvanced", tmp_avg_method_K);
+	}
+}
+
+
+/**
+ * @brief Check the consistency of some keys when Snowpack is run standalone.
+ * @details When running Snowpack standalone, we know better what to expect and so we can check that the configuration
+ * makes sense and warn if user if not. For example, that liquid precipitation re-accumulation is properly done.
+ * @param[in] mode Snowpack runnning mode (operational or research)
+ */
+void SnowpackConfig::checkStandaloneKeys(const std::string& mode)
+{
+	const std::string tst_sw_mode = get("SW_MODE", "Snowpack"); // Test settings for SW_MODE
+	if (tst_sw_mode == "BOTH") { //HACK: this is only for INP!
+		// Make sure there is not only one of ISWR and RSWR available
+		bool iswr_inp=true, rswr_inp = true;
+		getValue("ISWR_INP","Input",iswr_inp,IOUtils::nothrow);
+		getValue("RSWR_INP","Input",rswr_inp,IOUtils::nothrow);
+		if (!(iswr_inp && rswr_inp)) {
+			cerr << "[E] SW_MODE = " << tst_sw_mode << ": Please set both ISWR_INP and RSWR_INP to true in [Input]-section of io.ini!\n";
+			exit(1);
+		}
+	}
+
+	//warn the user if the precipitation miss proper re-accumulation
+	const bool HS_driven = get("ENFORCE_MEASURED_SNOW_HEIGHTS", "Snowpack");
+	if (mode != "OPERATIONAL" && !HS_driven) {
+		int psum_resampling_index = IOUtils::inodata;
+		const std::vector<std::pair<std::string, std::string>> vecAlgos( getValues("PSUM::RESAMPLE", "Interpolations1D") );
+		for (const auto &key : vecAlgos) {
+			if (IOUtils::strToUpper(key.second) == "ACCUMULATE") {
+				static std::regex pattern ("PSUM::RESAMPLE(\\d+)$", std::regex::icase);
+				std::smatch match;
+				if (std::regex_search(key.first, match, pattern)) { // first is the original key
+					psum_resampling_index = std::stoi(match[1]);
+					break;
+				} else {
+					throw IOException("ACCUMULATE key " + key.first + " does not contain a valid index; I.e. it does not match the pattern PARAM::resample#",AT);
+				}
+			}
+		}
+
+		if (psum_resampling_index == IOUtils::nodata) {
+			std::cerr << "[W] The precipitation should be re-accumulated over CALCULATION_STEP_LENGTH, not doing it is most probably an error!\n";
+		} else {
+			const double psum_accumulate = get("PSUM::arg"+std::to_string(psum_resampling_index)+"::period", "Interpolations1D");
+			const double sn_step_length = get("CALCULATION_STEP_LENGTH", "Snowpack");
+			if (sn_step_length*60. != psum_accumulate)
+				std::cerr << "[W] The precipitation should be re-accumulated over CALCULATION_STEP_LENGTH (currently, over " <<  psum_accumulate << "s)\n";
+		}
+	}
+	
+	const bool detect_grass = get("DETECT_GRASS", "SnowpackAdvanced");
+	if (detect_grass && !HS_driven) {
+		throw mio::IOException("[E] DETECT_GRASS is TRUE while ENFORCE_MEASURED_SNOW_HEIGHTS is FALSE. Cannot continue simulation, because snow height is used to detect grass.", AT);
+	}
+}
+
+
+/**
+ * @brief Add some keys when Snowpack is run standalone, based on some other keys.
+ * @details When running Snowpack standalone, we know better what to expect and so we can enforce some configuration
+ * keys that will be necessary. For example, computing the necessary averages in order to run the DETECT_GRASS filter. Or
+ * to properly filter the forcings when running in polar configuration.
+ * @param[in] mode Snowpack runnning mode (operational or research)
+ */
+void SnowpackConfig::addStandaloneKeys(const std::string& mode)
+{
+	// Add keys to perform running mean in Antarctic variant
+	const std::string variant = get("VARIANT", "SnowpackAdvanced");
+	if (variant == "ANTARCTICA" || variant == "POLAR") {
+		addKey("*::edit999", "InputEditing", "COPY");
+		addKey("*::arg999::dest", "InputEditing", "VW_AVG");
+		addKey("*::arg999::src", "InputEditing", "VW");
+		addKey("*::edit998", "InputEditing", "COPY");
+		addKey("*::arg998::dest", "InputEditing", "RH_AVG");
+		addKey("*::arg998::src", "InputEditing", "RH");
+
+		addKey("VW_AVG::filter1", "Filters", "AGGREGATE");
+		addKey("VW_AVG::arg1::type", "Filters", "MEAN");
+		addKey("VW_AVG::arg1::soft", "Filters", "true");
+		addKey("VW_AVG::arg1::min_pts", "Filters", "101");
+		addKey("VW_AVG::arg1::min_span", "Filters", "360000");
+		addKey("RH_AVG::filter1", "Filters", "AGGREGATE");
+		addKey("RH_AVG::arg1::type", "Filters", "MEAN");
+		addKey("RH_AVG::arg1::soft", "Filters", "true");
+		addKey("RH_AVG::arg1::min_pts", "Filters", "101");
+		addKey("RH_AVG::arg1::min_span", "Filters", "360000");
+	}
+
+	const bool useCanopyModel = get("CANOPY", "Snowpack");
+	if (mode == "OPERATIONAL") {
+		addKey("RESEARCH", "SnowpackAdvanced", "false");
+		addKey("AVGSUM_TIME_SERIES", "Output", "false");
+		if (useCanopyModel) {
+			throw mio::IOException("Please don't set CANOPY to 1 in OPERATIONAL mode", AT);
+		}
+	}
+
+	const bool detect_grass = get("DETECT_GRASS", "SnowpackAdvanced");
+	if (detect_grass) {
+		// we need various average values of tss and hs, all for "past" windows (left)
+		// Require at least one value per 3 hours
+		addKey("*::edit899", "InputEditing", "COPY");
+		addKey("*::arg899::dest", "InputEditing", "TSS_A24H");
+		addKey("*::arg899::src", "InputEditing", "TSS");
+		addKey("TSS_A24H::filter1", "Filters", "AGGREGATE");
+		addKey("TSS_A24H::arg1::type", "Filters", "MEAN");
+		addKey("TSS_A24H::arg1::centering", "Filters", "left");
+		addKey("TSS_A24H::arg1::min_pts", "Filters", "48"); //TODO change # data required to 4
+		addKey("TSS_A24H::arg1::min_span", "Filters", "86340");
+
+		addKey("*::edit890", "InputEditing", "COPY");
+		addKey("*::arg890::dest", "InputEditing", "TSS_A12H");
+		addKey("*::arg890::src", "InputEditing", "TSS");
+		addKey("TSS_A12H::filter1", "Filters", "AGGREGATE");
+		addKey("TSS_A12H::arg1::type", "Filters", "MEAN");
+		addKey("TSS_A12H::arg1::centering", "Filters", "left");
+		addKey("TSS_A12H::arg1::min_pts", "Filters", "24"); //TODO change # data required to 2
+		addKey("TSS_A12H::arg1::min_span", "Filters", "43140");
+
+		addKey("*::edit880", "InputEditing", "COPY");
+		addKey("*::arg880::dest", "InputEditing", "HS_A3H");
+		addKey("*::arg880::src", "InputEditing", "HS");
+		addKey("HS_A3H::filter1", "Filters", "AGGREGATE");
+		addKey("HS_A3H::arg1::type", "Filters", "MEAN");
+		addKey("HS_A3H::arg1::centering", "Filters", "left");
+		addKey("HS_A3H::arg1::min_pts", "Filters", "6"); //TODO change # data required to 1
+		addKey("HS_A3H::arg1::min_span", "Filters", "10740");
 	}
 }

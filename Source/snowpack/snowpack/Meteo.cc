@@ -38,59 +38,28 @@ using namespace mio;
 ************************************************************/
 
 Meteo::Meteo(const SnowpackConfig& cfg)
-       : canopy(cfg), dataGenerator(nullptr), roughness_length_parametrization("CONST"), roughness_length(0.), height_of_wind_value(0.),
-         variant(), stability(MO_HOLTSLAG), research_mode(false), useCanopyModel(false)
+       : canopy(cfg),
+         roughness_length_parametrization("CONST"),
+         roughness_length_dflt(cfg.get("ROUGHNESS_LENGTH", "Snowpack")),
+         height_of_wind_value(cfg.get("HEIGHT_OF_WIND_VALUE", "Snowpack")),
+         stability(MO_HOLTSLAG),
+         research_mode(cfg.get("RESEARCH", "SnowpackAdvanced")),
+         useCanopyModel(cfg.get("CANOPY", "Snowpack")),
+         adjust_height_of_wind_value(cfg.get("ADJUST_HEIGHT_OF_WIND_VALUE", "SnowpackAdvanced"))
 {
 	const std::string stability_model = cfg.get("ATMOSPHERIC_STABILITY", "Snowpack");
 	stability = getStability(stability_model);
-	
-	cfg.getValue("VARIANT", "SnowpackAdvanced", variant);
 
 	// Check if we use ROUGHNESS_LENGTH parametrization
 	const std::string tmp_z0_string = "";
 	cfg.getValue("ROUGHNESS_LENGTH", "Snowpack", roughness_length_parametrization);
-	if (roughness_length_parametrization != "AMORY2017") {
-		roughness_length_parametrization = "CONST";
-		//Initial estimate of the roughness length for the site; will be adjusted iteratively, default value and operational mode: 0.002 m
-		cfg.getValue("ROUGHNESS_LENGTH", "Snowpack", roughness_length);
-	}
-
-	//Defines whether the canopy model is used. OUT_CANOPY must also be set to dump canopy parameters to file; see Constants_local.h
-	cfg.getValue("CANOPY", "Snowpack", useCanopyModel);
-
-	//Define the heights of the meteo measurements above ground (m). Required for surface energy exchange computation and for drifting and blowing snow.
-	cfg.getValue("HEIGHT_OF_WIND_VALUE", "Snowpack", height_of_wind_value);
-
-	cfg.getValue("RESEARCH", "SnowpackAdvanced", research_mode);
-}
-
-Meteo::Meteo(const Meteo& mt)
-       : canopy(mt.canopy), dataGenerator(nullptr), roughness_length_parametrization(mt.roughness_length_parametrization), roughness_length(mt.roughness_length), height_of_wind_value(mt.height_of_wind_value),
-         variant(mt.variant), stability(mt.stability), research_mode(mt.research_mode), useCanopyModel(mt.useCanopyModel) {}
-
-Meteo& Meteo::operator=(const Meteo& mt)
-{
-	canopy = mt.canopy;
-	dataGenerator = nullptr;
-	roughness_length = mt.roughness_length;
-	height_of_wind_value = mt.height_of_wind_value;
-	variant = mt.variant;
-	stability = mt.stability;
-	research_mode = mt.research_mode;
-	useCanopyModel = mt.useCanopyModel;
-
-	return *this;
-}
-
-Meteo::~Meteo()
-{
-	if (dataGenerator!=nullptr) delete dataGenerator;
+	if (roughness_length_parametrization != "AMORY2017") roughness_length_parametrization = "CONST";
 }
 
 /**
  * @brief Parse the given string an return the matching atmospheric stability algorithm
- * @param[in] stability_model atmospheric stability model specification
- * @return stability model
+ * @param[in] stability_model Atmospheric stability model specification
+ * @return Stability model
  */
 Meteo::ATM_STABILITY Meteo::getStability(const std::string& stability_model)
 {
@@ -121,8 +90,8 @@ Meteo::ATM_STABILITY Meteo::getStability(const std::string& stability_model)
 }
 
 /**
- * @brief set the atmosphere stability to a given value
- * @param i_stability stability model (see possible values in constructor)
+ * @brief Set the atmospheric stability to a given value
+ * @param i_stability Stability model (see possible values in constructor)
  */
 void Meteo::setStability(const Meteo::ATM_STABILITY& i_stability)
 {
@@ -130,25 +99,12 @@ void Meteo::setStability(const Meteo::ATM_STABILITY& i_stability)
 }
 
 /**
- * @brief get the atmosphere stability
- * @return stability model (see possible values in constructor)
+ * @brief Get the atmospheric stability
+ * @return Stability model (see possible values in constructor)
  */
 Meteo::ATM_STABILITY Meteo::getStability() const
 {
 	return stability;
-}
-
-/**
- * @brief Projects precipitations and snow height perpendicular to slope
- * @param hs Height of snow (m)
- * @param precips precipitations (kg m-2)
- * @param slope_angle (deg)
- */
-void Meteo::projectPrecipitations(const double& slope_angle, double& precips, double& hs)
-{
-	const double cos_sl = cos(slope_angle*mio::Cst::to_rad);
-	precips *= cos_sl;
-	if (hs != IOUtils::nodata) hs *= cos_sl;
 }
 
 /**
@@ -167,6 +123,16 @@ double Meteo::windspeedProfile(const CurrentMeteo& Mdata, const double& target_z
 	return vw_corr;
 }
 
+/**
+ * @brief Richardson stability correction.
+ * @param ta_v Virtual air temperature.
+ * @param t_surf_v Virtual surface temperature.
+ * @param zref Reference height.
+ * @param vw Wind speed.
+ * @param z_ratio Ratio of heights.
+ * @param ustar Friction velocity.
+ * @param psi_s Stability correction for scalars.
+ */
 void Meteo::RichardsonStability(const double& ta_v, const double& t_surf_v, const double& zref, const double& vw, const double& z_ratio, double &ustar, double &psi_s)
 {
 	const double Ri = Constants::g / t_surf_v * (ta_v - t_surf_v) * zref / Optim::pow2(vw);
@@ -189,9 +155,55 @@ void Meteo::RichardsonStability(const double& ta_v, const double& t_surf_v, cons
 	ustar = Constants::karman * vw / (z_ratio - psi_m);
 }
 
+double Meteo::compZ0(const std::string& model, const SnowStation& Xdata, CurrentMeteo& Mdata) {
+	if (model == "CONST") {
+		return parametrizeSnowZ0(Xdata, Mdata);
+	} else if (model == "AMORY2017") {
+		if (Mdata.ta == IOUtils::nodata || Mdata.ta < IOUtils::C_TO_K(-20.)) {
+			return 0.0002;	// See L267-268 in Amory et al. (2020), https://doi.org/10.5194/gmd-2020-368
+		} else {
+			// See Eq. 7 in Amory et al. (2017), https://doi.org/10.1007/s10546-017-0242-5
+			const double a=0.0027;
+			const double b=0.00009;
+			const double c=0.0000015;
+			const double Tc = IOUtils::K_TO_C(std::min(Constants::meltfreeze_tk, Mdata.ta));
+			const double CDN10 = a + b * Tc + c * Tc * Tc;
+			return exp(-((Constants::karman / sqrt(CDN10)) - log(10.)));
+		}
+	} else {
+		throw InvalidArgumentException("Unsupported roughness length parametrization", AT);
+	}
+}
+
+double Meteo::parametrizeSnowZ0(const SnowStation& Xdata, CurrentMeteo& Mdata) const
+{
+	if (Mdata.sig_5GHz!=IOUtils::nodata) {
+		const double top_LWC = Xdata.averageFromTop(0.3, [](const ElementData& e) { return (e.theta[WATER]+e.theta[WATER_PREF]); });
+		if (top_LWC>0.01) {
+			const double z0 = exp( (Mdata.sig_5GHz + 18.0157) / 3.9510 );
+			return z0;
+		}
+	}
+
+	return roughness_length_dflt;
+}
+
+/**
+ * @brief Monin-Obukhov stability correction.
+ * @param use_stability Stability model to use.
+ * @param ta_v Virtual air temperature.
+ * @param t_surf_v Virtual surface temperature.
+ * @param t_surf Surface temperature.
+ * @param zref Reference height.
+ * @param vw Wind speed.
+ * @param z_ratio Ratio of heights.
+ * @param ustar Friction velocity.
+ * @param psi_s Stability correction for scalars.
+ * @param psi_m Stability correction for momentum.
+ */
 void Meteo::MOStability(const ATM_STABILITY& use_stability, const double& ta_v, const double& t_surf_v, const double& t_surf, const double& zref, const double& vw, const double& z_ratio, double &ustar, double &psi_s, double &psi_m)
 {
-	if (use_stability==NEUTRAL) { //prevent recomputing ustar, for consistency
+	if (use_stability == NEUTRAL) { //prevent recomputing ustar, for consistency
 		psi_m = psi_s = 0.;
 		return;
 	}
@@ -273,40 +285,20 @@ void Meteo::MOStability(const ATM_STABILITY& use_stability, const double& ta_v, 
 	}
 }
 
-double Meteo::compZ0(const std::string& model, const CurrentMeteo& Mdata) {
-	if (model == "CONST") {
-		return roughness_length;
-	} else if (model == "AMORY2017") {
-		if (Mdata.ta == IOUtils::nodata || Mdata.ta < IOUtils::C_TO_K(-20.)) {
-			return 0.0002;	// See L267-268 in Amory et al. (2020), https://doi.org/10.5194/gmd-2020-368
-		} else {
-			// See Eq. 7 in Amory et al. (2017), https://doi.org/10.1007/s10546-017-0242-5
-			const double a=0.0027;
-			const double b=0.00009;
-			const double c=0.0000015;
-			const double Tc = IOUtils::K_TO_C(std::min(Constants::meltfreeze_tk, Mdata.ta));
-			const double CDN10 = a + b * Tc + c * Tc * Tc;
-			return exp(-((Constants::karman / sqrt(CDN10)) - log(10.)));
-		}
-	} else {
-		throw InvalidArgumentException("Unsupported roughness length parametrization", AT);
-	}
-}
-
 /**
  * @brief Atmospheric stability correction for wind values.
  * This makes an iteration to find z0 and ustar at the same time
- * @param Mdata
- * @param Xdata
+ * @param[in] MdataCurrent meteorological data
+ * @param Xdata Snow station data
  * @param adjust_VW_height if set to false, assumes a constant measurement height for wind values (default: true, ie.
  * take into account the snow height decreasing the sensor height above the surface)
  */
-void Meteo::MicroMet(const SnowStation& Xdata, CurrentMeteo &Mdata, const bool& adjust_VW_height)
+void Meteo::MicroMet(const SnowStation& Xdata, CurrentMeteo &Mdata, const double& roughness_length, const bool& adjust_VW_height)
 {
 	static const unsigned int max_iter = 100;
 
 	//Adapting the roughness length value depending on the presence or absence of snow
-	const double rough_len = ((Xdata.cH - Xdata.Ground) > 0.03)?(compZ0(roughness_length_parametrization, Mdata)):(Xdata.BareSoil_z0);
+	Mdata.z0 = ((Xdata.cH - Xdata.Ground) > 0.03)? roughness_length : Xdata.BareSoil_z0;;
 
 	// Ideal approximation of pressure and vapor pressure
 	const double p0 = Atmosphere::stdAirPressure(Xdata.meta.position.getAltitude());
@@ -332,7 +324,7 @@ void Meteo::MicroMet(const SnowStation& Xdata, CurrentMeteo &Mdata, const bool& 
 	// initial guess (neutral)
 	static const double eps1 = 1.e-3;
 	double psi_m = 0., psi_s = 0.;
-	const double z_ratio = log((zref - d_pump) / rough_len);
+	const double z_ratio = log((zref - d_pump) / Mdata.z0);
 	double ustar_old, ustar = Constants::karman * vw / (z_ratio - psi_m); //at first, psi_m=0
 	unsigned int iter = 0;
 	do {
@@ -354,7 +346,6 @@ void Meteo::MicroMet(const SnowStation& Xdata, CurrentMeteo &Mdata, const bool& 
 		prn_msg(__FILE__, __LINE__, "wrn", Mdata.date,
 		        "Stability correction did not converge (azi=%.0lf, slope=%.0lf) --> assume neutral",
 		        Xdata.meta.getAzimuth(), Xdata.meta.getSlopeAngle());
-		Mdata.z0 = rough_len;
 		Mdata.ustar = Constants::karman * vw / z_ratio;
 		Mdata.psi_s = 0.;
 		return;
@@ -362,40 +353,13 @@ void Meteo::MicroMet(const SnowStation& Xdata, CurrentMeteo &Mdata, const bool& 
 
 	// Save the values in the global Mdata data structure to use it later
 	Mdata.ustar = Constants::karman * vw / (z_ratio - psi_m);
-	Mdata.z0 = rough_len;
 	Mdata.psi_s = psi_s;
 	Mdata.psi_m = psi_m;
 }
 
 /**
- * @brief Compute measured snow depth change rate to detect growing grass (canopy) vs. snowfall on bare ground
- * @param Mdata
- * @param Xdata
- * @param hs_a3hl6 snow depth average from t_now - 6 h to t_now - 3 h
- * @return whether grass should be detected
- */
-bool Meteo::compHSrate(CurrentMeteo& Mdata, const SnowStation& Xdata, const double& hs_a3hl6)
-{
-	if (Xdata.getNumberOfNodes() == Xdata.SoilNode+1) { //Detect only when there is no snow pack yet.
-		if ((hs_a3hl6 != Constants::undefined) && (Mdata.hs_a3h != Constants::undefined)) {
-			// NOTE we compare two consecutive time spans of 3 hours and take the rate from
-			//      the "middle" of the two time spans. hs_rate is in m h-1.
-			Mdata.hs_rate = (Mdata.hs_a3h - hs_a3hl6) / 3.;
-			return true;
-		} else {
-			Mdata.hs_rate = Constants::undefined;
-			return false;
-		}
-	} else {
-		Mdata.tss_a12h = Constants::undefined;
-		Mdata.tss_a24h = Constants::undefined;
-		Mdata.hs_rate = Constants::undefined;
-		return false;
-	}
-}
-
-/**
- * @brief
+ * @brief Compute atmospheric stability related parameters and if necessary run canopy model
+ * @details
  * \li with CANOPY set:
  * 		In case of an existing canopy, call canopy routine, which computes precipitation, radiation,
  * 		friction velocity and reference temperature for the surface below the canopy.
@@ -417,120 +381,40 @@ bool Meteo::compHSrate(CurrentMeteo& Mdata, const SnowStation& Xdata, const doub
  * @param Mdata meteorological forcing
  * @param Xdata snow profile data
  * @param runCanopyModel should the canopy module also be called?
- * @param adjust_height_of_wind_value should the height of wind values be adjusted?
+ * @param i_adjust_height_of_wind_value should the height of wind values be adjusted?
  */
 void Meteo::compMeteo(CurrentMeteo &Mdata, SnowStation &Xdata, const bool runCanopyModel,
-                     const bool adjust_height_of_wind_value)
+                     const bool i_adjust_height_of_wind_value)
 {
+	//Parametrize the roughness_length based on currentMeteo and SnowStation data
+	const double roughness_length = compZ0(roughness_length_parametrization, Xdata, Mdata);
+
 	// adjust_height_of_wind_value should be passed externally in order to allow to change it for each
 	// pixel in Alpine3D
 	bool canopy_status = true;
 	if (useCanopyModel && runCanopyModel) {	// The canopy model should not necessarily be called at every call to compMeteo
-		Mdata.z0 = compZ0(roughness_length_parametrization, Mdata);
-		canopy_status = canopy.runCanopyModel(Mdata, Xdata, roughness_length, height_of_wind_value,
-		                                      adjust_height_of_wind_value);
+		Mdata.z0 = compZ0(roughness_length_parametrization, Xdata, Mdata);
+		canopy_status = canopy.runCanopyModel(Mdata, Xdata, roughness_length, height_of_wind_value, i_adjust_height_of_wind_value);
 	}
 
 	if (!(useCanopyModel) || canopy_status==false) {
-		MicroMet(Xdata, Mdata, adjust_height_of_wind_value);
+		MicroMet(Xdata, Mdata, roughness_length, i_adjust_height_of_wind_value);
 	}
 }
 
-void Meteo::compRadiation(const SnowStation &station, mio::SunObject &sun, SnowpackConfig &cfg, CurrentMeteo &Mdata)
+/**
+ * @brief Compute atmospheric stability related parameters and if necessary run canopy model
+ * @details
+ * Same as compMeteo(CurrentMeteo &Mdata, SnowStation &Xdata, const bool runCanopyModel, const bool i_adjust_height_of_wind_value)
+ * but adjust_height_of_wind_value is taken from the SnowpackConfig object that has been given to the constructor, so it is
+ * initiallized from the configuration file and configuration defaults.
+ * 
+ * @param Mdata meteorological forcing
+ * @param Xdata snow profile data
+ * @param runCanopyModel should the canopy module also be called?
+ */
+void Meteo::compMeteo(CurrentMeteo &Mdata, SnowStation &Xdata, const bool runCanopyModel)
 {
-	const std::string sw_mode = cfg.get("SW_MODE", "Snowpack");
-	const bool force_sw_mode = cfg.get("FORCE_SW_MODE", "SnowpackAdvanced"); //Adjust for correct radiation input if ground is effectively bare. It HAS to be set to true in operational mode.
-	const bool enforce_hs = cfg.get("ENFORCE_MEASURED_SNOW_HEIGHTS", "Snowpack");
-	const double iswr_ref = (sw_mode == "REFLECTED") ?  Mdata.rswr/station.Albedo : Mdata.iswr;
-
-	sun.calculateRadiation(Mdata.ta, Mdata.rh, station.Albedo);
-	double H_toa, H_direct, H_diffuse;
-	sun.getHorizontalRadiation(H_toa, H_direct, H_diffuse);
-	const double Md = sun.getSplitting(iswr_ref);
-	double dir_h, diff;
-	if ((iswr_ref > 0.) && (H_direct > 0.)) {
-		dir_h = (1. - Md)*iswr_ref;
-		diff = Md*iswr_ref;
-	} else {
-		if (iswr_ref > 0.) {
-			dir_h = 0.;
-			diff = std::max(Md*iswr_ref, H_diffuse);
-		} else {
-			dir_h = 0.;
-			diff = 0.;
-		}
-	}
-
-	if (sw_mode == "REFLECTED") {
-		Mdata.rswr = (dir_h + diff)*station.Albedo;
-	} else {
-		Mdata.iswr = dir_h + diff; //usually = iswr_ref except for corner cases
-	}
-
-	if (force_sw_mode) {
-		// Sometimes, there is no snow left on the ground at the station (-> rswr is small)
-		// but there is still some snow left in the simulation, which then is hard to melt
-		// if we find this is such a situation, we set iswr to the potential radiation.
-		// Such a correction is only needed for flat field, the others will inherit it
-		// What snow depth should be used?
-		const bool use_hs_meas = enforce_hs && (station.meta.getSlopeAngle() < Constants::min_slope_angle);
-		const double hs = (use_hs_meas)? station.mH - station.Ground : station.cH - station.Ground;
-		const double iswr_factor = Mdata.rswr / (dir_h+diff+Constants::eps); //avoiding "0/0"
-
-		if ((hs>0 && hs<0.1) && Mdata.rh<0.7 && iswr_factor<0.3) {
-			dir_h = H_direct;
-			diff = H_diffuse;
-			Mdata.iswr = dir_h+diff;
-			if (Mdata.iswr>0. && (Mdata.rswr/Mdata.iswr) < (2.0*station.SoilAlb))
-				Mdata.rswr = Mdata.iswr * 2.0*station.SoilAlb;
-			else
-				Mdata.rswr = 0.;
-			cfg.addKey("SW_MODE", "Snowpack", "BOTH");  // as both Mdata.iswr and Mdata.rswr were reset
-		}
-	}
-	
-	//if needed and possible, recompute ilwr and ea now that we have a good iswr (computed from rswr with a good parametrized albedo)
-	if (Mdata.poor_ea) {
-		if (dataGenerator==nullptr) dataGenerator = new mio::DataGenerator(cfg, std::set<std::string>({"ILWR"}));
-		mio::MeteoData md(Mdata.date, station.meta);
-		md("TA") = Mdata.ta;
-		md("TSS") = Mdata.tss;
-		md("RH") = Mdata.rh;
-		md("HS") = Mdata.hs;
-		md("ISWR") = Mdata.iswr;
-		md("RSWR") = Mdata.rswr;
-		std::vector<mio::MeteoData> vecMeteo( {md} );
-		
-		dataGenerator->fillMissing( vecMeteo );
-		Mdata.ea = SnLaws::AirEmissivity(vecMeteo.front(), variant);
-	}
-
-	Mdata.diff = diff;
-	Mdata.dir_h = dir_h;
-	double azimuth, elevation;
-	sun.position.getHorizontalCoordinates(azimuth, elevation);
-	Mdata.elev = elevation*mio::Cst::to_rad;
-}
-
-void Meteo::radiationOnSlope(const SnowStation &sector, const mio::SunObject &sun, CurrentMeteo &Mdata, SurfaceFluxes &surfFluxes)
-{
-	//diff remains the same as on flat field
-	double dir_slope;
-	if (sector.meta.getSlopeAngle() > Constants::min_slope_angle) {
-		dir_slope = sun.position.getHorizontalOnSlope(sector.meta.getAzimuth(), sector.meta.getSlopeAngle(), Mdata.dir_h, 9.);
-		if ( (Mdata.dir_h+Mdata.diff) > 0. ) {
-			Mdata.iswr = std::min(dir_slope + Mdata.diff, Constants::solcon);
-			Mdata.rswr = sector.Albedo*Mdata.iswr;
-		} else {
-			Mdata.iswr = 0.;
-			Mdata.rswr = 0.;
-		}
-	} else {
-		dir_slope = Mdata.dir_h;
-	}
-
-	// Assign radiation values to Sdata
-	surfFluxes.sw_hor  += (Mdata.dir_h+Mdata.diff);
-	surfFluxes.sw_dir  += dir_slope;
-	surfFluxes.sw_diff += Mdata.diff;
+	//run with the default value as read from the initial cfg file
+	compMeteo(Mdata, Xdata, runCanopyModel, adjust_height_of_wind_value);
 }

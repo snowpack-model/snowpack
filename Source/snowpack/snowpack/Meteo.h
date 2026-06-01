@@ -49,38 +49,33 @@ class Meteo {
 		} ATM_STABILITY;
 
 		Meteo(const SnowpackConfig& i_cfg);
-		Meteo(const Meteo& mt);
-		Meteo& operator=(const Meteo& mt); ///<Assignement operator
-		virtual ~Meteo();
 
-		static void projectPrecipitations(const double& SlopeAngle, double& precips, double& hs);
+		void compMeteo(CurrentMeteo &Mdata, SnowStation &Xdata, const bool runCanopyModel);
+		void compMeteo(CurrentMeteo &Mdata, SnowStation &Xdata, const bool runCanopyModel, const bool i_adjust_height_of_wind_value);
 		static double windspeedProfile(const CurrentMeteo& Mdata, const double& target_z, const double& source_vw = -1.);
-		static bool compHSrate(CurrentMeteo& Mdata, const SnowStation& vecXdata, const double& hs_a3hl6);
-		void compMeteo(CurrentMeteo &Mdata, SnowStation &Xdata, const bool runCanopyModel,
-		               const bool adjust_height_of_wind_value);
-		void compRadiation(const SnowStation &station, mio::SunObject &sun, SnowpackConfig &cfg, CurrentMeteo &Mdata);
-		static void radiationOnSlope(const SnowStation &sector, const mio::SunObject &sun, CurrentMeteo &Mdata, SurfaceFluxes &surfFluxes);
 		void setStability(const ATM_STABILITY& i_stability);
 		static ATM_STABILITY getStability(const std::string& stability_model);
 		ATM_STABILITY getStability() const;
 
  	private:
-		void MicroMet(const SnowStation& Xdata, CurrentMeteo& Mdata, const bool& adjust_VW_height=true);
+		void MicroMet(const SnowStation& Xdata, CurrentMeteo& Mdata, const double& roughness_length, const bool& adjust_VW_height=true);
 		static double getParameterAverage(mio::IOManager& io, const mio::MeteoData::Parameters& param,
 		                                  const mio::Date& current_date, const int& time_span, const int& increment);
 		static void RichardsonStability(const double& ta_v, const double& t_surf_v, const double& zref,
 		                                const double& vw, const double& z_ratio, double &ustar, double &psi_s);
 		static void MOStability(const ATM_STABILITY& use_stability, const double& ta_v, const double& t_surf_v, const double& t_surf,
 		                                       const double& zref, const double& vw, const double& z_ratio, double &ustar, double &psi_s, double &psi_m);
-		double compZ0(const std::string& model, const CurrentMeteo& Mdata);
-
+		double compZ0(const std::string& model, const SnowStation& Xdata, CurrentMeteo& Mdata);
+		double parametrizeSnowZ0(const SnowStation& Xdata, CurrentMeteo& Mdata) const;
+		
 		Canopy canopy;
-		mio::DataGenerator *dataGenerator; //as pointer so we don't have to construct an expensive object if not needed
 		std::string roughness_length_parametrization;
-		double roughness_length, height_of_wind_value;
-		std::string variant;
-		ATM_STABILITY stability;
-		bool research_mode, useCanopyModel;
+		const double roughness_length_dflt; ///< Initial estimate of the snow roughness length for the site; will be adjusted iteratively, default value and operational mode: 0.002 m
+		double height_of_wind_value; ///< Define the heights of the meteo measurements above ground (m). Required for surface energy exchange computation and for drifting and blowing snow.
+		ATM_STABILITY stability; ///< Atmospheric stability correction model
+		bool research_mode; ///< Either research mode or operational mode (this is some kind of "meta setting" that toggle some defaults values)
+		bool useCanopyModel; ///< Defines whether the canopy model is used. OUT_CANOPY must also be set to dump canopy parameters to file; see Constants_local.h
+		bool adjust_height_of_wind_value; ///< Adjust the wind speed measurement height above the surface as snow height increases
 };
 
 #endif //END of Meteo.h

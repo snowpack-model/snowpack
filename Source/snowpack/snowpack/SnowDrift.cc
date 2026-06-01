@@ -122,7 +122,7 @@ double SnowDrift::get_tau_thresh(const ElementData& Edata)
 	// For now assume logarithmic wind profile; TODO change this later
 	const double weight = 0.02 * Constants::density_ice * (Edata.sp + 1.) * Constants::g * MM_TO_M(Edata.rg);
 	// weight = Edata.Rho*(Edata.sp + 1.)*Constants::g*MM_TO_M(Edata.rg);
-	const double sig = 300.;
+	static const double sig = 300.;
 	const double binding = 0.0015 * sig * Edata.N3 * Optim::pow2(Edata.rb/Edata.rg);
 	const double tau_thresh = SnowDrift::schmidt_drift_fudge * (weight + binding);  // Original value for fudge: 1. (Schmidt)
 	//const double ustar_thresh = sqrt(tau_thresh / Constants::density_air);
@@ -210,8 +210,8 @@ double SnowDrift::compMassFlux(const std::vector<ElementData>& EMS, const double
  * 	@note However, erosion will also be controlled by mH and thus a measured snow depth (HS1) is required
  * 	@note If either measured snow depth is missing or the conditions for a real erosion are not fulfilled,
  *          the possibility of a virtual erosion will be considered using the ErosionLevel marker (virtual erodible layer).
- * @param Mdata
- * @param Xdata
+ * @param Mdata Meteorological forcings
+ * @param Xdata snowpack column
  * @param Sdata
  * @param forced_massErode if greater than 0, force the eroded mass to the given value (instead of computing it)
 */
