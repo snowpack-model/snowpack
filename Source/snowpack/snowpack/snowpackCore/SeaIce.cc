@@ -512,14 +512,14 @@ double SeaIce::calculateMeltingTemperature(const double& Sal)
 		// Normalize the cubic equation:
 		static const double p = a2 / a1;
 		static const double q = a3 / a1;
-		double r = -((Sal > 300.)?(300.):(Sal)) / a1;
+		const double r = -((Sal > 300.)?(300.):(Sal)) / a1;
 
 		// Calculate the depressed cubic:
 		static const double a = q - (p * p / 3.0);
 		const double b = 2.0 * p * p * p / 27.0 - (p * q / 3.) + r;
 
 		// Calculate discriminant
-		static const double disc = (b / 2.) * (b / 2.) + (a / 3.) * (a / 3.) * (a / 3.);
+		const double disc = (b / 2.) * (b / 2.) + (a / 3.) * (a / 3.) * (a / 3.);
 
 		double rt1 = 0.;
 		if (disc > 0.) {

@@ -50,6 +50,9 @@ https://snowpack.slf.ch
 					<option value="FALSE"/>
 					<help>Allow scaling the whole snow pack when there is a period without precipitation and the measured and simulated snow height diverge too much? (warning: this does not conserve mass! The only goal is to have better evaluations of new snow amounts in case the measured and simulated snow heights diverge too much; default is true in &lt;i&gt;operational&lt;/i&gt; mode and false in &lt;i&gt;research&lt;/i&gt; mode)</help>
 				</parameter>
+				<parameter key="INFLATE_TRACKING_PERIOD" type="number" format="decimal" precision="3" default="1.000" min="0.0" unit="days" optional="true">
+					<help>Period over which the measured and modelled snow height discrepancy should be tracked for activating inflate/deflate (in days).</help>
+				</parameter>
 				<parameter key="INFLATE_INFO" type="alternative" optional="true">
 					<option value="TRUE"/>
 					<option value="FALSE"/>

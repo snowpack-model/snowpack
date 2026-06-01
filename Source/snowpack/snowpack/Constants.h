@@ -67,7 +67,7 @@ namespace Constants {
 	/// @name Emissivity (1)
 	//@{
 	const double emissivity_snow = 0.98;
-  const double emissivity_soil = 0.95;
+	const double emissivity_soil = 0.95;
 
 	//@}
 	/// @name Density (kg m-3)

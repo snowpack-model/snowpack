@@ -28,14 +28,15 @@
 
 #include <snowpack/SnowpackConfig.h>
 #include <snowpack/vanGenuchten.h>
-class SeaIce;	//forward declaration to prevent include loop
-
 #include <snowpack/Constants.h>
 #include <meteoio/MeteoIO.h>
 
 #include <string>
 #include <vector>
 #include <functional>
+
+class SeaIce;	//forward declaration to prevent include loop
+class CurrentMeteo; //forward declaration to prevent loop
 
 /// @brief The 3 different phases in the matrix
 enum {
@@ -76,91 +77,6 @@ class ZwischenData {
 		std::vector<double> drift24; ///< Twenty-four hour hoar index every half-hour over one day 48
 		std::vector<double> hn3;    ///< Three hour new snow heights every half-hour over three days 144
 		std::vector<double> hn24;   ///< Twenty-four hour snow heights every half-hour over three days 144
-};
-
-/**
- * @brief CurrentMeteo is the class of interpolated meteo data for the current calculation time step.
- * @details
- * It contains some additional and very important derived parameters such as the roughness length or running mean values.
- */
-class CurrentMeteo {
-	public:
-		CurrentMeteo();
-		CurrentMeteo(const SnowpackConfig& i_cfg);
-
-		void reset(const SnowpackConfig& i_cfg);
-		void setMeasTempParameters(const mio::MeteoData& md);
-		size_t getNumberMeasTemperatures() const;
-		size_t getNumberFixedRates() const;
-		size_t getMaxNumberMeasTemperatures() const;
-		void getFixedPositions(std::vector<double>& positions) const;
-		size_t getNumberFixedPositions() const;
-		void copySnowTemperatures(const mio::MeteoData& md, const unsigned int& current_slope);
-		void copySolutes(const mio::MeteoData& md, const size_t& i_number_of_solutes);
-
-		const std::string toString() const;
-		friend std::ostream& operator<<(std::ostream& os, const CurrentMeteo& data);
-		friend std::istream& operator>>(std::istream& is, CurrentMeteo& data);
-
-		mio::Date date;  ///< Date of current meteo data
-		double ta;       ///< Air temperature (K)
-		double rh;       ///< Relative humidity (% or 1)
-		double rh_avg;   ///< Running mean of relative humidity (1)
-		double vw;       ///< Wind velocity at snow station (m s-1)
-		double vw_avg;   ///< Running mean of wind velocity at snow station (m s-1)
-		double vw_max;   ///< Maximum wind velocity at snow station (m s-1)
-		double dw;       ///< Wind direction at snow station (deg)
-		double vw_drift; ///< Wind velocity for blowing and drifting snow (operational: wind ridge station)
-		double dw_drift; ///< Wind direction of blowing and drifting snow (operational: wind ridge station)
-		double ustar;    ///< The friction velocity (m s-1) computed in mt_MicroMet() and also used later for the MeteoHeat fluxes
-		double z0;       ///< The roughness length computed in SnowDrift and also used later for the MeteoHeat fluxes (m)
-		double psi_s;    ///< Stability correction for scalar heat fluxes
-		double psi_m;    ///< Stability correction for momentum
-		double iswr;     ///< Incoming SHORTWAVE radiation (W m-2)
-		double rswr;     ///< Reflected SHORTWAVE radiation (W m-2) divide this value by the ALBEDO to get iswr
-		double mAlbedo;  ///< Measured snow albedo
-		double diff;     ///< Diffuse radiation from the sky (W m-2)
-		double dir_h;    ///< Horizontal direct radiation from the sky (W m-2)
-		double elev;     ///< Solar elevation to be used in Canopy.c (rad) => see also
-		double ea;       ///< Atmospheric emissivity (1)
-		double lw_net;   ///< Net longwave radiation (W m-2)
-		double tss;      ///< Snow surface temperature (K)
-		double tss_a12h; ///< Snow surface temperature averaged over past 12 hours (K)
-		double tss_a24h; ///< Snow surface temperature averaged over past 24 hours (K)
-		double ts0;      ///< Bottom temperatures of snow/soil pack (K)
-		double psum;     ///< precipitation sum over the current timestep (mm)
-		double psum_ph;  ///< precipitation phase for the current timestep (between 0 and 1, 0 is fully solid while 1 is fully liquid).
-		double psum_tech;///< Equivalent precipitation water sum for technical snow over the current timestep (mm)
-		double hs;       ///< The measured height of snow (m)
-		double hs_a3h;   ///< Snow depth averaged over 3 past hours
-		double hs_rate;  ///< The rate of change in snow depth (m h-1)
-		double geo_heat; ///< Geo heat flux (W/m^2), for the neumann lower boundary condition in the heat equation
-		double adv_heat; ///< Advective heat to inject in the soil (if ADVECTIVE_HEAT and related parameters set to true)
- 		double surf_melt;///< Surface melt (kg m-2) per CALCULATION_STEP_LENGTH
- 		double snowdrift;///< Snow drift (erosion or deposition) (kg m-2) per CALCULATION_STEP_LENGTH
- 		double sublim;   ///< Surface sublimation and evaporation (kg m-2) per CALCULATION_STEP_LENGTH
-		double odc;      ///< Optical depth of the cloud (HACK: units??)
-		double p;        ///< Atmospheric pressure (HACK: units??)
-
-		std::vector<double> ts;    ///< Measured snow or/and soil temperatures (K)
-		std::vector<double> zv_ts; ///< Positions of all measured snow or/and soil temperatures (m)
-		std::vector<double> conc;  ///< Solute concentrations in precipitation
-		double rho_hn;             ///< Measured new snow density (kg m-3)
-#ifndef SNOWPACK_CORE
-		double rime_hn;            ///< riming index of new snow
-		double lwc_hn;             ///< liquid water content of new snow
-#endif
-		
-		bool poor_ea;              ///< when ilwr has not been measured nor parametrized in good conditions, it could be redone later on
-
-	private:
-		size_t getNumberMeasTemperatures(const mio::MeteoData& md);
-
-		std::vector<double> fixedPositions; ///< Positions of fixed snow/soil temperatures (m)
-		double minDepthSubsurf;             ///< Sensor must be covered by minDepthSubsurf (m) to be output
-		size_t maxNumberMeasTemperatures;   ///< Max allowed number of measured snow/soil temperatures, depending on variant
-		size_t numberMeasTemperatures;      ///< Number of measured snow/soil temperatures
-		size_t numberFixedRates;
 };
 
 /// @brief The 3 mathematical fields that can be solved
@@ -291,7 +207,7 @@ class SN_SNOWSOIL_DATA {
 /**
  * @brief The physical properties of an individual element used in snow layers (one or multiple elements are contained in each snow layer).
  * @details
- * NOTE on M below: this is the mass of an element that is neither changed by phase changes nor densification. 
+ * NOTE on M below: this is the mass of an element that is neither changed by phase changes nor densification.
  * It is set in the data initialization and used to compute the stress field.
  * It can ONLY be changed by the WATER TRANSPORT or SURFACE SUBLIMATION or WIND TRANSPORT routines.
  */
@@ -356,7 +272,7 @@ class ElementData {
 		double rg;                 ///< grain radius (mm)
 		double dd;                 ///< snow dendricity: 0 = none, 1 = newsnow
 		double sp;                 ///< sphericity: 1 = round, 0 = angular
-		double ogs;                ///< optical equivalent grain size (mm)
+		double ogs;                ///< optical equivalent grain size (diameter, mm)
 		double rb;                 ///< grain bond radius (mm)
 		double N3;                 ///< grain Coordination number (1)
 		size_t mk;                 ///< grain marker (history dependent)
@@ -632,14 +548,21 @@ class CanopyData {
 class SeaIce;	// Foreward-declare sea ice class
 /**
  * @brief Station data including all information on snowpack layers (elements and nodes) and on canopy.
- * @details This is the PRIMARY data structure of the SNOWPACK program. It is used extensively not only 
- * during the finite element solution but also to control the post-processing writes. It is initialized 
+ * @details This is the PRIMARY data structure of the SNOWPACK program. It is used extensively not only
+ * during the finite element solution but also to control the post-processing writes. It is initialized
  * from SN_SNOWSOIL_DATA.
  */
 class SnowStation {
 	public:
-		explicit SnowStation(const bool i_useCanopyModel=true, const bool i_useSoilLayers=true,
-                         const bool i_isAlpine3D=false, const bool i_useSeaIceModule=false);
+#ifndef SNOWPACK_CORE
+		explicit SnowStation(const bool& i_useCanopyModel=true, const bool& i_useSoilLayers=true,
+                         const bool& i_isAlpine3D=false, const bool& i_useSeaIceModule=false, const bool& i_allow_inflate=false);
+		SnowStation(const SnowpackConfig& cfg, const bool& i_isAlpine3D, const bool& isOperational);
+#else
+		explicit SnowStation(const bool& i_useCanopyModel=true, const bool& i_useSoilLayers=true,
+                         const bool& i_isAlpine3D=false, const bool& i_useSeaIceModule=false);
+		SnowStation(const SnowpackConfig& cfg, const bool& i_isAlpine3D);
+#endif
 		SnowStation(const SnowStation& c);
 
 		~SnowStation();
@@ -655,12 +578,15 @@ class SnowStation {
 		void splitElement(const size_t& e);							//Split an element
 		void splitElements(const double& max_element_length, const double& comb_thresh_l);	//Check for splitting, calls splitElement(...) for actual splitting
 		void CheckMaxSimHS(const double& max_simulated_hs);					//Check for hs > max_simulated_hs
+		bool needDeflateInflate(const double &sn_dt, const double& tracking_period);
+		void deflateInflate(const CurrentMeteo& Mdata, double& dhs_corr, double& mass_corr, const bool &prn_check);
+		double forcedErosion(const double hs);
 
 		void compSnowpackMasses();
 		void compSnowpackInternalEnergyChange(const double& sn_dt);
 		void compSoilInternalEnergyChange(const double& sn_dt);
-		double averageFromTop(const double& averagingDepth, const std::function<double(const ElementData&)>& Elementproperty);
-		
+		double averageFromTop(const double& averagingDepth, const std::function<double(const ElementData&)>& Elementproperty) const;
+
 		double getLiquidWaterIndex() const;
 		double getModelledTemperature(const double& z) const;
 		double getTotalLateralFlowSnow() const;
@@ -687,6 +613,7 @@ class SnowStation {
 
 		CanopyData* Cdata;          ///< Pointer to canopy data
 		SeaIce* Seaice;             ///< Pointer to sea ice class
+		//std::unique_ptr<SeaIce> Seaice; ///< Pointer to sea ice class
 		double pAlbedo;             ///< Parameterized snow albedo
 		double Albedo;              ///< Snow albedo used by the model
 		double SoilAlb;             ///< Soil albedo
@@ -748,13 +675,18 @@ class SnowStation {
 		static const double thresh_moist_snow, thresh_moist_soil;
 		static const size_t number_top_elements;
 		static unsigned short number_of_solutes;  ///< The model treats that number of solutes
+#ifndef SNOWPACK_CORE
+		bool allow_inflate;
+#endif
+		bool useCanopyModel;
 
 	private:
+		static double flexibleMaxElemLength(const double& depth, const double& comb_thresh_l); ///< When using REDUCE_N_ELEMENTS, this function determines the max element length, depending on depth inside the snowpack.
+		
 		size_t nNodes;                      ///< Actual number of nodes; different for each exposition
 		size_t nElems;                      ///< Actual number of elements (nElems=nNodes-1)
 		unsigned short int maxElementID;    ///< maximum ElementID currently used (so each element can get a unique ID)
-		bool useCanopyModel, useSoilLayers, isAlpine3D; ///< The model includes soil layers
-		static double flexibleMaxElemLength(const double& depth, const double& comb_thresh_l); ///< When using REDUCE_N_ELEMENTS, this function determines the max element length, depending on depth inside the snowpack.
+		bool useSoilLayers, isAlpine3D; ///< The model includes soil layers
 };
 
 /**
@@ -925,6 +857,202 @@ class RunInfo {
 		static double getNumericVersion(std::string version_str);
 		static mio::Date getRunDate();
 		static std::string getCompilationDate();
+};
+
+/**
+ * @brief Slope a C. Fierz class ;-) to handle the multiple expositions in Snowpack standalone
+ */
+class Slope {
+
+	public:
+		Slope(const mio::Config& cfg);
+
+		double prevailing_wind_dir;
+		unsigned int nSlopes;
+		unsigned int mainStation;  ///< main station, flat field or slope
+		unsigned int sector;       ///< main station (0) or current slope sector (1:nSlopes)
+		unsigned int first;        ///< first virtual slope station in computing sequence
+		unsigned int luv;
+		unsigned int lee;
+		bool north, south;
+		std::string snow_erosion;
+		bool mainStationDriftIndex;
+		bool snow_redistribution, luvDriftIndex;
+
+		unsigned int getSectorDir(const double& dir_or_expo) const;
+		void setSlope(const unsigned int slope_sequence, std::vector<SnowStation>& vecXdata, double& wind_dir);
+
+	private:
+		double sector_width;       ///< width of slope sector: 360./std::max((unsigned)1, nSlopes-1) deg
+};
+
+class MainControl {
+	public:
+		MainControl(const SnowpackConfig& cfg);
+
+		void getOutputControl(const mio::Date& step, const mio::Date& sno_step);
+		void reset();
+
+		// New members for output control
+		double tsstart;          ///< Start time for time series dump (Julian)
+		double tsdaysbetween;    ///< Interval (days) between time series dumps
+		double profstart;        ///< Start time for profile dump (Julian)
+		double profdaysbetween;  ///< Interval (days) between profile dumps
+		double first_backup;     ///< Start time for first Xdata backup (Julian)
+		double backup_days_between; ///< Interval (days) between Xdata backups
+		double calculation_step_length; ///< Length of each calculation step (minutes)
+		double sn_dt;            ///< calculation step length in seconds
+
+		size_t nStep;            ///< Time step number
+		size_t nAvg;             ///< Number of calculation time steps to average fluxes etc.
+		size_t HzStep;           ///< Hazard step number (should be half of nStep in operational mode)
+		bool   TsDump;           ///< Flag for time series dump
+		bool   HzDump;           ///< Calculation of hazard information will be performed
+		bool   PrDump;           ///< Flag for profile dump
+		bool   XdataDump;        ///< Backup of Xdata will be performed
+		bool   sdbDump;          ///< Dump to data base if required in operational mode
+		bool   resFirstDump;     ///< Flag to dump initial state of snowpack
+		bool   label_snow;       ///< Flag for label of backup sno-file: 0: no suffix, 1: suffix: "backup", 2: suffix: timestamp
+};
+
+/**
+ * @brief a C. Fierz class ;-)
+ * To cumulate various mass fluxes over either hazard or time series time steps
+ */
+class Cumsum {
+
+	public:
+		Cumsum(const unsigned int nSlopes) : precip(0.),
+          drift(0.), snow(0.), runoff(0.), rain(0.), dhs_corr(0.), mass_corr(0.),
+          erosion(nSlopes, 0.), erosion_length(nSlopes, 0.), redeposition(nSlopes, 0.), redeposition_length(nSlopes, 0.) {}
+
+		double precip;
+		double drift, snow, runoff, rain;
+		double dhs_corr, mass_corr; // inflate/deflate variables
+		std::vector<double> erosion; // Cumulated eroded mass; dumped to file as rate
+		std::vector<double> erosion_length; // Cumulated eroded length
+		std::vector<double> redeposition; // Cumulated eroded mass
+		std::vector<double> redeposition_length; // Cumulated redeposited length
+};
+
+/**
+ * @brief Class of interpolated meteo data for the current calculation time step.
+ * @details
+ * It contains some additional and very important derived parameters such as the roughness length or running mean values. It
+ * offers several helper methods to prepare the meteorological data as received from MeteoIO and copy it into 
+ * Snowpack's internal structures (including many Snowpack tricks).
+ */
+class CurrentMeteo {
+	public:
+		CurrentMeteo();
+		CurrentMeteo(const SnowpackConfig& i_cfg);
+		
+		//Setters
+		void setMeasTempParameters(const mio::MeteoData& md);
+		void setMeteoData(const mio::MeteoData& md, const double& prevailing_wind_dir);
+		
+		//Getters
+		///@brief Returns the number of measured snow/soil temperatures stored in MeteoData
+		size_t getNumberMeasTemperatures() const noexcept { return numberMeasTemperatures;}
+		size_t getNumberFixedRates() const noexcept {return numberFixedRates;}
+		size_t getMaxNumberMeasTemperatures() const noexcept {return maxNumberMeasTemperatures;}
+		void getFixedPositions(std::vector<double>& positions) const noexcept {positions = fixedPositions;}
+		std::vector<double> getFixedPositions() const noexcept {return fixedPositions;}
+		size_t getNumberFixedPositions() const noexcept {return fixedPositions.size();}
+		static double getHS_last3hours(mio::IOManager &io, const mio::Date& current_date);
+		
+		//Helper methods
+		void copySnowTemperatures(const mio::MeteoData& md, const unsigned int& current_slope);
+		void copySolutes(const mio::MeteoData& md, const size_t& i_number_of_solutes);
+		void editMeteoData(mio::MeteoData& md) const;
+		bool validMeteoData(const mio::MeteoData& md, const std::string& StationName, const unsigned int& nslopes) const;
+		void dataForCurrentTimeStep(SurfaceFluxes& surfFluxes, std::vector<SnowStation>& vecXdata,
+									const Slope& slope, SnowpackConfig& cfg, mio::SunObject &sun,
+									double& precip, const double& lw_in, const double& hs_a3hl6, double& tot_mass_in);
+		void reset(const SnowpackConfig& i_cfg);
+		
+		const std::string toString() const;
+		friend std::ostream& operator<<(std::ostream& os, const CurrentMeteo& data);
+		friend std::istream& operator>>(std::istream& is, CurrentMeteo& data);
+
+		mio::Date date;  ///< Date of current meteo data
+		double ta;       ///< Air temperature (K)
+		double rh;       ///< Relative humidity (% or 1)
+		double rh_avg;   ///< Running mean of relative humidity (1)
+		double vw;       ///< Wind velocity at snow station (m s-1)
+		double vw_avg;   ///< Running mean of wind velocity at snow station (m s-1)
+		double vw_max;   ///< Maximum wind velocity at snow station (m s-1)
+		double dw;       ///< Wind direction at snow station (deg)
+		double vw_drift; ///< Wind velocity for blowing and drifting snow (operational: wind ridge station)
+		double dw_drift; ///< Wind direction of blowing and drifting snow (operational: wind ridge station)
+		double ustar;    ///< The friction velocity (m s-1) computed in Meteo::MicroMet() and also used later for the MeteoHeat fluxes
+		double z0;       ///< The snow roughness length computed in SnowDrift and also used later for the MeteoHeat fluxes (m)
+		double psi_s;    ///< Stability correction for scalar heat fluxes
+		double psi_m;    ///< Stability correction for momentum
+		double iswr;     ///< Incoming SHORTWAVE radiation (W m-2)
+		double rswr;     ///< Reflected SHORTWAVE radiation (W m-2) divide this value by the ALBEDO to get iswr
+		double mAlbedo;  ///< Measured snow albedo
+		double diff;     ///< Diffuse radiation from the sky (W m-2)
+		double dir_h;    ///< Horizontal direct radiation from the sky (W m-2)
+		double elev;     ///< Solar elevation to be used in Canopy.c (rad) => see also
+		double ea;       ///< Atmospheric emissivity (1)
+		double lw_net;   ///< Net longwave radiation (W m-2)
+		double tss;      ///< Snow surface temperature (K)
+		double tss_a12h; ///< Snow surface temperature averaged over past 12 hours (K)
+		double tss_a24h; ///< Snow surface temperature averaged over past 24 hours (K)
+		double ts0;      ///< Bottom temperatures of snow/soil pack (K)
+		double psum;     ///< precipitation sum over the current timestep (mm)
+		double psum_ph;  ///< precipitation phase for the current timestep (between 0 and 1, 0 is fully solid while 1 is fully liquid).
+		double psum_tech;///< Equivalent precipitation water sum for technical snow over the current timestep (mm)
+		double hs;       ///< The measured height of snow (m)
+		double hs_a3h;   ///< Snow depth averaged over 3 past hours
+		double hs_rate;  ///< The rate of change in snow depth (m h-1)
+		double geo_heat; ///< Geo heat flux (W/m^2), for the neumann lower boundary condition in the heat equation
+		double adv_heat; ///< Advective heat to inject in the soil (if ADVECTIVE_HEAT and related parameters set to true)
+		double sig_5GHz; ///< 5GHz Radar backscatter coefficient
+ 		double surf_melt;///< Surface melt (kg m-2) per CALCULATION_STEP_LENGTH
+ 		double snowdrift;///< Snow drift (erosion or deposition) (kg m-2) per CALCULATION_STEP_LENGTH
+ 		double sublim;   ///< Surface sublimation and evaporation (kg m-2) per CALCULATION_STEP_LENGTH
+		double odc;      ///< Optical depth of the cloud (HACK: units??)
+		double p;        ///< Atmospheric pressure (HACK: units??)
+
+		std::vector<double> ts;    ///< Measured snow or/and soil temperatures (K)
+		std::vector<double> zv_ts; ///< Positions of all measured snow or/and soil temperatures (m)
+		std::vector<double> conc;  ///< Solute concentrations in precipitation
+		double rho_hn;             ///< Measured new snow density (kg m-3)
+#ifndef SNOWPACK_CORE
+		double rime_hn;            ///< riming index of new snow
+		double lwc_hn;             ///< liquid water content of new snow
+#endif
+
+		bool poor_ea;              ///< when ilwr has not been measured nor parametrized in good conditions, it could be redone later on
+
+	private:
+		void setShortWave(const SnowStation& Xdata);
+		bool compHSrate(const SnowStation& vecXdata, const double& hs_a3hl6);
+		void compRadiation(const SnowStation &station, mio::SunObject &sun, SnowpackConfig &cfg);
+		void radiationOnSlope(const SnowStation &sector, const mio::SunObject &sun, SurfaceFluxes &surfFluxes);
+		static void projectPrecipitations(const double& SlopeAngle, double& precips, double& i_hs);
+		static size_t getNumberMeasTemperatures(const mio::MeteoData& md);
+
+		std::shared_ptr<mio::DataGenerator> dataGenerator; ///< pointer so we don't have to construct an expensive object if not needed
+		std::vector<double> fixedPositions; ///< Positions of fixed snow/soil temperatures (m)
+		double minDepthSubsurf;             ///< Sensor must be covered by minDepthSubsurf (m) to be output
+		size_t maxNumberMeasTemperatures;   ///< Max allowed number of measured snow/soil temperatures, depending on variant
+		size_t numberMeasTemperatures;      ///< Number of measured snow/soil temperatures
+		size_t numberFixedRates;
+		double height_of_wind_value; ///< Define the heights of the meteo measurements above ground (m). Required for surface energy exchange computation and for drifting and blowing snow.
+		double thresh_rain; ///< If no datagenerator has been configured, rain only for air temperatures warmer than threshold (degC)
+		double wind_scaling_factor; ///< Used to scale wind for blowing and drifting snowpack (from statistical analysis)
+		std::string variant; ///< Snowpack variant, such as SEAICE, POLAR, etc
+		std::string sw_mode; ///< SHort wave can be provided as incoming, reflected or both
+		bool useCanopyModel; ///< Defines whether the canopy model is used. OUT_CANOPY must also be set to dump canopy parameters to file; see Constants_local.h
+		bool enforce_snow_height; ///< Assimilate the measured snow height or rely on rain gauge measurements for mass input
+		bool advective_heat; ///< If set to true, allow "injecting" some heat flux in the soil
+		bool soil_flux; ///< Lower boundary condition either on temperatures (Dirichlet) or fluxes (Neumann)
+		bool force_sw_mode; ///< Adjust for correct radiation input if ground is effectively bare. It HAS to be set to true in operational mode
+		bool adjust_height_of_wind_value; ///< Adjust the wind speed measurement height above the surface as snow height increases
+		bool iswr_is_net; ///< iswr in fact contains NetSWR
 };
 
 #endif
