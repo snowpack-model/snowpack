@@ -21,7 +21,6 @@
 #define SALTATION_H
 
 #include <meteoio/MeteoIO.h>
-#include <string.h>
 
 #include <snowpack/SnowpackConfig.h>
 

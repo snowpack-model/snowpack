@@ -1566,7 +1566,7 @@ void Canopy::CanopyRadiationOutput(SnowStation& Xdata, const CurrentMeteo& Mdata
  * transpiration
  * @param Mdata CurrentMeteo
  * @param Xdata Profile
- * @param roughness_length
+ * @param roughness_length Roughness lenght of the snow cover (for the soil it is provided through Xdata.BareSoil_z0)
  * @param height_of_wind_val
  * @param adjust_VW_height if set to false, assumes a constant measurement height for wind values (default: true, ie.
  * take into account the snow height decreasing the sensor height above the surface)

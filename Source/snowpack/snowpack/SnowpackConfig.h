@@ -35,6 +35,9 @@ class SnowpackConfig : public mio::Config {
 		 */
 		SnowpackConfig(const std::string& i_filename);
 		SnowpackConfig(const mio::Config& i_cfg);
+		
+		void checkStandaloneKeys(const std::string& mode);
+		void addStandaloneKeys(const std::string& mode);
 
 	private:
 		void setDefaults();
