@@ -753,7 +753,7 @@ void CanopyData::initialize(const SN_SNOWSOIL_DATA& SSdata, const bool useCanopy
 		throw UnknownValueException(msg.str(), AT);
 	}
 
-	sigf= 1.-exp(-krnt_lai * (lai));; ///< radiation transmissivity (1)
+	sigf= 1.-exp(-krnt_lai * (lai)); ///< radiation transmissivity (1)
 
 	// aerodynamic resistances
 	ra = 0.; ///< from canopy air to reference height
@@ -1896,7 +1896,7 @@ const std::string ElementData::toString() const
 	os << "<ElementData>\t";
 	os << std::fixed << std::showpoint;
 	os << "" << depositionDate.toString(mio::Date::ISO) << "\n";
-	os << "\tL=" << setprecision(4) << L << " type=" << type << " marker=" << setprecision(2) << mk << " Density=" << Rho << " Mass=" << M << "\n";;
+	os << "\tL=" << setprecision(4) << L << " type=" << type << " marker=" << setprecision(2) << mk << " Density=" << Rho << " Mass=" << M << "\n";
 
 	os << "\tVolumetric contents: soil=" << setprecision(2) << theta[SOIL] << " ice=" << theta[ICE] << " water=" << theta[WATER] << " air=" << theta[AIR] << "\n";
 	os << "\tGrains: gsz=2*rg=" <<  2.*rg << " ogs=" << ogs << " rb=" <<  rb << " dd=" <<  dd << " sp=" <<  sp << " N3=" << N3 << "\n";

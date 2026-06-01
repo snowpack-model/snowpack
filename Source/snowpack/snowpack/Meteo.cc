@@ -298,7 +298,7 @@ void Meteo::MicroMet(const SnowStation& Xdata, CurrentMeteo &Mdata, const double
 	static const unsigned int max_iter = 100;
 
 	//Adapting the roughness length value depending on the presence or absence of snow
-	Mdata.z0 = ((Xdata.cH - Xdata.Ground) > 0.03)? roughness_length : Xdata.BareSoil_z0;;
+	Mdata.z0 = ((Xdata.cH - Xdata.Ground) > 0.03)? roughness_length : Xdata.BareSoil_z0;
 
 	// Ideal approximation of pressure and vapor pressure
 	const double p0 = Atmosphere::stdAirPressure(Xdata.meta.position.getAltitude());

@@ -98,7 +98,7 @@ bool SnowpackConfig::initStaticData()
 	advancedConfig["SW_ABSORPTION_SCHEME"] = "MULTI_BAND";
 	advancedConfig["FORCE_SW_MODE"] = "false";
 	advancedConfig["TEMP_INDEX_DEGREE_DAY"] = "0."; //to replace the EB computation during melt phases by a dday model
-	advancedConfig["TEMP_INDEX_SWR_FACTOR"] = "0.";; //to replace the EB computation during melt phases by a dday model
+	advancedConfig["TEMP_INDEX_SWR_FACTOR"] = "0."; //to replace the EB computation during melt phases by a dday model
 	advancedConfig["THRESH_RAIN"] = "1.2";
 	advancedConfig["THRESH_RH"] = "0.5";
 	advancedConfig["THRESH_DTEMP_AIR_SNOW"] = "3.0";

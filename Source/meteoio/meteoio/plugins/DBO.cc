@@ -88,13 +88,13 @@ namespace mio {
 
 static const double dbo_tz = 0.; //assuming GMT
 
-//the pair <date, value> is contained in an array of size 2
-inline bool parseTsPoint(const picojson::value& v, Date& datum, double& value)
+//the triplet <date, value, forecast_flag> is contained in an array of size 3
+inline bool parseTsPoint(const picojson::value& v, Date& datum, double& value, bool& isForecast)
 {
 	if (!v.is<picojson::array>()) return false;
 
 	const picojson::array& array = v.get<picojson::array>();
-	if (array.size()!=2) return false;
+	if (array.size()!=3) return false;
 
 	//reading the date
 	if (array[0].is<std::string>())
@@ -108,6 +108,15 @@ inline bool parseTsPoint(const picojson::value& v, Date& datum, double& value)
 	else {
 		if (!array[1].is<picojson::null>()) return false;
 		value = IOUtils::nodata;
+		return true;
+	}
+
+	//reading the forecast flag
+	if (array[2].is<bool>())
+		isForecast = array[2].get<bool>();
+	else {
+		if (!array[2].is<picojson::null>()) return false;
+		isForecast = true;
 		return true;
 	}
 
@@ -199,8 +208,8 @@ void DBO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	if (vecMeta.empty()) fillStationMeta();
 	if (!coverageRestrict.isUndef() && (coverageRestrict.start>dateEnd || coverageRestrict.end<dateStart)) return;
 	
-	const Date trueStart = (coverageRestrict.isUndef())? dateStart : std::max(dateStart, coverageRestrict.start);
-	const Date trueEnd = (coverageRestrict.isUndef())? dateEnd : std::min(dateEnd, coverageRestrict.end);
+	const Date trueStart( (coverageRestrict.isUndef())? dateStart : std::max(dateStart, coverageRestrict.start) );
+	const Date trueEnd( (coverageRestrict.isUndef())? dateEnd : std::min(dateEnd, coverageRestrict.end) );
 	
 	vecMeteo.resize(vecMeta.size());
 	for(size_t ii=0; ii<vecMeta.size(); ii++)
@@ -221,7 +230,7 @@ void DBO::fillStationMeta()
 
 	for(size_t ii=0; ii<vecStationName.size(); ii++) {
 		std::string station_id( IOUtils::strToUpper(vecStationName[ii]) );
-		std::string network = "IMIS";
+		std::string network( "IMIS" );
 
 		if (std::regex_match(station_id, stat_id_matches, stat_id_regex)) {
 			network = stat_id_matches.str(1);
@@ -229,6 +238,7 @@ void DBO::fillStationMeta()
 		}
 
 		const std::string request( endpoint + metadata_api + network + "/" + station_id );
+		if (dbo_debug) std::cout << "Metadata request: " << request << "\n";
 		json->readAndParse(request, station_id);
 		const std::string error_msg( json->getString("$.error") );
 		if (!error_msg.empty()) 
@@ -374,13 +384,16 @@ std::vector<DBO::tsData> DBO::getTimeSerie(const size_t& tsID, const double& fac
 
 	std::vector<tsData> vecData( vecRaw.size() );
 	for (size_t ii=0; ii<vecRaw.size(); ii++) {
-		double value;
 		Date datum;
-		if (!parseTsPoint(vecRaw[ii], datum, value))  {
+		double value;
+		bool isForecast;
+		if (!parseTsPoint(vecRaw[ii], datum, value, isForecast))  {
 			JsonWrapper::printJSON(vecRaw[ii], 0);
 			throw InvalidFormatException("Error parsing element "+IOUtils::toString(ii)+" of timeseries "+IOUtils::toString(tsID), AT);
 		}
 
+		if (isForecast) continue; //reject forecast values for now
+		
 		if (value!=IOUtils::nodata) value = value * factor + offset;
 		vecData[ii] = tsData(datum, value);
 	}
@@ -404,6 +417,7 @@ void DBO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Meteo
 
 		const std::string tsID( IOUtils::toString(ts.id) );
 		const std::string request( endpoint + data_api + tsID + "?from=" + Start + "&until=" + End );
+		if (dbo_debug) std::cout << "Data request: " << request << "\n";
 		json->readAndParse(request, tsID);
 		const std::string error_msg( json->getString("$.error") );
 		if (!error_msg.empty()) throw UnknownValueException("Error while parsing JSON for '"+vecMeta[stationindex].getStationID()+"': "+error_msg, AT);
@@ -415,7 +429,7 @@ void DBO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Meteo
 			continue;
 		}
 
-		MeteoData md_pattern = (vecMeteo.empty())? MeteoData(Date(), sd) : vecMeteo.front(); //This assumes that the station is not moving!
+		MeteoData md_pattern( (vecMeteo.empty())? MeteoData(Date(), sd) : vecMeteo.front() ); //This assumes that the station is not moving!
 		if (!md_pattern.param_exists(ts.parname)) {
 			md_pattern.addParameter( ts.parname );
 			for (size_t jj=0; jj<vecMeteo.size(); jj++) vecMeteo[jj].addParameter( ts.parname ); //TODO rewrite addParameter to create and attribute a value
